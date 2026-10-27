@@ -6,7 +6,7 @@ Next.js 15 (App Router, TypeScript), rendered to static pages at build time.
 | Page | What |
 |---|---|
 | `/<lang>` | the project, the status of each device, how it fits together, the repositories, the team, the press kit, the token |
-| `/<lang>/docs/...` | the documentation of the [hakios](https://github.com/shimoku74/hakios) repository, with a table of contents |
+| `/<lang>/docs/...` | the documentation of the [hakios](https://github.com/oosexgang/hakios) repository, with a table of contents |
 | `/<lang>/faq` | the questions people ask, answered short |
 
 ## Run it

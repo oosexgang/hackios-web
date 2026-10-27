@@ -1,7 +1,7 @@
 // Everything about the project that is not translated lives here.
 
 // The project's code. NEXT_PUBLIC_GITHUB_URL in the hosting dashboard overrides it.
-export const GITHUB_URL = process.env.NEXT_PUBLIC_GITHUB_URL || "https://github.com/shimoku74/hakios";
+export const GITHUB_URL = process.env.NEXT_PUBLIC_GITHUB_URL || "https://github.com/oosexgang/hakios";
 // where a link of the documentation to a file of the repository (not a page) goes
 export const REPO_FILES = `${GITHUB_URL}/blob/main/`;
 
@@ -27,7 +27,7 @@ export const TEAM: Member[] = [
 ];
 
 // The repositories, as the documentation's "How the repositories fit" describes them.
-const GH = "https://github.com/shimoku74/";
+const GH = "https://github.com/oosexgang/";
 export const REPOS = [
   { name: "hakios", url: `${GH}hakios`, key: "common" },
   { name: "hakios-sc7280-common", url: `${GH}hakios-sc7280-common`, key: "soc" },

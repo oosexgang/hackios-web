@@ -5,7 +5,7 @@
 The kernel, a placeholder loader and a tiny raw-syscall user space: **nothing of Apple's and nothing of any phone's**.
 
 ```sh
-git clone https://github.com/shimoku74/hakios.git hakios
+git clone https://github.com/oosexgang/hakios.git hakios
 cd hakios
 tools/hakios-device.py sync    # the SoC, device and UEFI repositories (the open kernel needs none of them; the rest does)
 make doctor          # what this machine lacks, and what to do

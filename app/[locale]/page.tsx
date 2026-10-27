@@ -8,7 +8,7 @@ import { TELEGRAM, TEAM, TOKEN, PRESS, CONTACT_HANDLE, REPOS } from "@/lib/site"
 
 export const revalidate = 1800;
 
-const QUICK = `git clone https://github.com/shimoku74/hakios.git
+const QUICK = `git clone https://github.com/oosexgang/hakios.git
 cd hakios
 make doctor          # what this machine lacks, and what to do
 make qemu-open       # the open kernel in QEMU: nothing of Apple's, nothing of a phone's`;

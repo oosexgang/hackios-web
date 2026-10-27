@@ -70,7 +70,7 @@ the boot test itself: `./xl enter` does a `fastboot boot`, which a truly locked 
 
 ## Running from Windows (Git Bash) — what had to be solved
 
-- **No theos needed for a first boot.** `xl` falls back to `prebuilt/mach.development.bcm2837` and
+- **No theos needed for a first boot.** `xl` falls back to `prebuilt/hakios-kernel` and
   `prebuilt/loader.efi` when nothing is built (`xl:50-53,120`): those are the `redwood` kernel and
   loader, i.e. for this SoC. The toolchain is only needed to build a *changed* kernel (which the
   cellular fix eventually is).

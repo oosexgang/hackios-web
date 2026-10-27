@@ -16,4 +16,4 @@ An empty cell is a part nobody has looked at on that device yet.
 
 | SoC | What | |
 |---|---|---|
-| `sc7280` | Qualcomm SC7280 family (SM7325 "Snapdragon 778G", QCM6490; "yupik", "kodiak") | [`socs/sc7280/`](https://github.com/shimoku74/hakios/tree/main/socs/sc7280) |
+| `sc7280` | Qualcomm SC7280 family (SM7325 "Snapdragon 778G", QCM6490; "yupik", "kodiak") | [`socs/sc7280/`](https://github.com/oosexgang/hakios/tree/main/socs/sc7280) |

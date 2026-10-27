@@ -32,7 +32,7 @@ That makes `devices/mydevice/` with:
   is the last thing you want. The drivers of your SoC (from its fragment) and QEMU's stay in.
 
 A SoC without a repository yet: make `socs/<soc>/` the same way by hand (`soc.conf`, `configs/<soc>.config`), from
-[socs/sc7280](https://github.com/shimoku74/hakios/tree/main/socs/sc7280).
+[socs/sc7280](https://github.com/oosexgang/hakios/tree/main/socs/sc7280).
 
 **Done when** `tools/hakios-device.py check mydevice` says it holds together, and the README says which SoC values differ and you
 know why.

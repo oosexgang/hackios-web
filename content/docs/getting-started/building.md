@@ -14,8 +14,9 @@ make kernel              # xnu/apply.sh (once), xnu-deps/setup.sh (once), then t
 `make kernel` is `tools/make-kernel.sh`: it copies the drivers you edited into the tree (`xnu/sync-drivers.sh`), puts the
 configuration's choice of drivers where XNU's build reads it (`tools/hakios-config.py kernel`), builds, and judges the result by
 what failed rather than by the exit status (the last steps of XNU's own build always fail on this machine configuration, for kext
-symbol sets this kernel does not have; any other failure is a failure). The kernel is
-`xnu-src/xnu-8796.121.2/BUILD/obj/DEVELOPMENT_ARM64_BCM2837/mach.development.bcm2837`.
+symbol sets this kernel does not have; any other failure is a failure). The kernel is **`hakios-kernel`** at the top of the
+repository (XNU's build calls it `mach.development.bcm2837` in `xnu-src/.../BUILD/obj/DEVELOPMENT_ARM64_BCM2837/`; every tool
+takes the copy named `hakios-kernel`, and `prebuilt/hakios-kernel` when there is none).
 
 | Host | Toolchain |
 |---|---|

@@ -55,7 +55,7 @@ A configuration sets them for you (`CONFIG_GPU=y` is `gpu=1`); [every argument](
 | `cam=5` | the cameras |
 | `modem=1` | the modem: its firmware, file systems, data path, SIM ([cellular](../cellular.md)) |
 | `var_store=1 ufs_write=1` | keep `/private/var` across reboots (**writes** to the partition `darwin`) |
-| `thermal=1 thermal_stop=105` | read the temperatures (the SC7280's fragment sets `thermal=1`); hand back to the loader at 105 °C (not set by default) |
+| `thermal=1` | read the temperatures (the SC7280's fragment sets it), and hand back to the loader at 105 °C: the driver's own default, `thermal_stop=N` for another limit, `thermal_stop=0` for none |
 | `battery_stop=15` | hand back to the loader before the battery is flat |
 
 ## When something goes wrong
@@ -63,7 +63,7 @@ A configuration sets them for you (`CONFIG_GPU=y` is `gpu=1`); [every argument](
 | You see | Do |
 |---|---|
 | a session that does not end | `./xl` leaves its log in `logs/` and brings the phone back from the boot loader, or tells you which keys to press |
-| the phone getting hot | `thermal_stop=105` (`CONFIG_THERMAL_STOP=105`) hands control back to the loader at that temperature; it is **not** set by default |
+| the phone getting hot | with `thermal=1` (the SC7280's fragment sets it) the run is handed back to the loader at 105 °C; `thermal_stop=N` changes the limit. Seen on the phone, 27 October 2026: `thermal: ... stop at 105 C` |
 | a run left alone on battery | `battery_stop=<percent>` ends it before the battery is flat |
 | a problem in `make config` | it names the symbol and why: a driver left out that an argument needs, firmware the open profile does not load |
 | anything else | the log in `logs/`, and `make doctor` with the phone on `adb` |

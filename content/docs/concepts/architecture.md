@@ -48,7 +48,7 @@ device's. A device's defconfig is three lines: the common kernel, its SoC's frag
 | common | the kernel port, every driver, the loader, user space, the tools, the documentation | this repository |
 | SoC | the SoC's facts (cores, addresses that are the family's), its drivers | `socs/sc7280` |
 | device | its defconfig, its status, its UEFI platform, its firmware script, drivers of its own | `devices/redwood` |
-| UEFI | Mu-Silicium with HakiOS's boot path, banner and name | `uefi` ([its README](https://github.com/shimoku74/hakios/blob/main/uefi/README.md)) |
+| UEFI | Mu-Silicium with HakiOS's boot path, banner and name | `uefi` ([its README](https://github.com/oosexgang/hakios/blob/main/uefi/README.md)) |
 
 ## What is written to the phone
 
@@ -58,7 +58,7 @@ device's. A device's defconfig is three lines: the common kernel, its SoC's frag
 | `/private/var` | only with `ufs_write=1 var_store=1` | the partition `darwin`, which you create yourself (`tools/userdata-carve.py` prints the commands; it changes nothing) |
 | anything else | never | the loader refuses every other write; `tools/provenance.allow` lists each piece of code that can write, and why |
 
-[LEGAL.md](https://github.com/shimoku74/hakios/blob/main/LEGAL.md) has the same, with what is and is not distributed.
+[LEGAL.md](https://github.com/oosexgang/hakios/blob/main/LEGAL.md) has the same, with what is and is not distributed.
 
 ## Where the code is
 

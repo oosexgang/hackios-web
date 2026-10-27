@@ -74,8 +74,8 @@ its own.
 
 ```
 soc sc7280
-	repository  https://github.com/shimoku74/hakios-sc7280-common.git
-	revision    977fc7181fc1eb984c4ebd4bb64c65a4d65f549a
+	repository  https://github.com/oosexgang/hakios-sc7280-common.git
+	revision    
 
 device qemu
 	path        devices/qemu                       kept in the common tree
