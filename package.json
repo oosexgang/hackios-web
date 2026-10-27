@@ -1,0 +1,25 @@
+{
+  "name": "hakios-web",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "docs": "node scripts/sync-docs.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "brand": "python3 scripts/brand.py"
+  },
+  "dependencies": {
+    "next": "15.5.27",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "marked": "14.1.4"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.2",
+    "@types/react": "19.1.12",
+    "@types/react-dom": "19.1.9",
+    "typescript": "5.6.3"
+  }
+}
