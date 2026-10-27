@@ -4,10 +4,11 @@ HakiOS is put together from layers, the way an Android device's source is (`devi
 that names them):
 
 ```
-hakios/              common: the kernel port, every common driver, the loader, user space, the tools, the docs
-├── socs/<soc>/                  a SoC family: soc.conf, configs/<soc>.config, drivers/ of its own
-├── devices/<name>/              a device: device.conf, configs/<name>_defconfig and <name>.config, drivers/, its UEFI, scripts
-└── devices/manifest.conf        every SoC and device repository: kept in this tree, or a repository of its own at a revision
+hakios/                          common: the kernel port, every common driver, the loader, user space, the tools, the docs
+├── devices/<name>/              a device, one repository: device.conf, configs/, drivers/, its UEFI platform, scripts
+│   └── soc/                     ... and its SoC family's layer: soc.conf, configs/<soc>.config, the SoC's drivers
+├── uefi/                        HakiOS's UEFI (Mu-Silicium with HakiOS's changes), one for every device
+└── devices/manifest.conf        every device and the UEFI: kept in this tree, or a repository of its own at a revision
 ```
 
 A SoC or device directory is the same whether it is kept in the common tree (`devices/qemu` is) or is a git repository of its own
@@ -22,6 +23,7 @@ that `tools/hakios-device.py sync` cloned into place (the others are): the tools
 | `configs/<name>_defconfig` | `#include common_defconfig`, `#include <soc>.config`, `#include <name>.config` | yes |
 | `configs/<name>.config` | what is this device's own: drivers left out or in, arguments, `CONFIG_DEVICE="<name>"` | yes |
 | `drivers/<subsystem>/conf` and the files it names | drivers of its own ([Writing a driver](drivers.md)) | no |
+| `soc/` | its SoC family's layer: `soc.conf`, `configs/<soc>.config`, the SoC's drivers ([below](#the-socs-layer)) | yes, unless `soc none` |
 | `pull-firmware.sh` | the device's firmware, from your own device, into `fw-*/` | for a phone |
 | `uefi/`, `prebuilt/` | the device's UEFI port and the images made of it | for a phone |
 | `README.md` | anything else a person needs to know | yes |
@@ -53,7 +55,9 @@ device redwood
 The device's page in this documentation ([redwood](../devices/redwood.md)) and the table of [all devices](../devices/index.md)
 are made from it by `tools/docs-gen.py`: the status is written once, next to the code it describes.
 
-## A SoC repository
+## The SoC's layer
+
+A device carries its SoC family's layer with it, in `soc/`, so that one repository is all a device needs:
 
 ```
 soc sc7280
@@ -64,17 +68,21 @@ soc sc7280
 	maintainer  the HakiOS developers (README.md)
 ```
 
-and `configs/<soc>.config`, the SoC's facts: `CONFIG_SOC`, its cores, and **the drivers of the SoC family**
-(`CONFIG_HAKIOS_CPUFREQ=y`, `CONFIG_HAKIOS_THERMAL=y`, ...), so that every device with the SoC has them, whatever it leaves out of
-its own.
+and `soc/configs/<soc>.config`, the SoC's facts: `CONFIG_SOC`, its cores, and **the drivers of the SoC family**
+(`CONFIG_HAKIOS_CPUFREQ=y`, `CONFIG_HAKIOS_THERMAL=y`, ...), so that the device has them whatever it leaves out of its own.
+
+Two devices with the same SoC each carry a copy. The copies must be the same: the tools take the SoC once, and refuse two copies that
+differ, naming both, because a build would otherwise depend on which device was checked out. `tools/hakios-device.py new --soc sc7280`
+copies the layer from a device that has it; a SoC nobody has yet gets a new layer to fill in. A SoC many devices share can also be a
+repository of its own in `socs/<soc>/` (a `soc` block in the manifest); the tools read both.
 
 ## The manifest
 
 `devices/manifest.conf` names every SoC and device:
 
 ```
-soc sc7280
-	repository  https://github.com/oosexgang/hakios-sc7280-common.git
+device redwood
+	repository  https://github.com/oosexgang/hakios-redwood.git
 	revision    
 
 device qemu
@@ -89,7 +97,7 @@ device sheng
 |---|---|
 | `tools/hakios-device.py list` (`make devices`) | every device and SoC, where it is, how much of it works |
 | `tools/hakios-device.py check [NAME...]` | a repository holds together: its conf reads, its defconfig includes the common kernel and its SoC's fragment and passes `hakios-config.py check`, its drivers' files are there, no two repositories have a configuration of the same name |
-| `tools/hakios-device.py new NAME --soc SOC --title ...` | a new device repository ([Port a device](index.md)) |
+| `tools/hakios-device.py new NAME --soc SOC --title ... [--fdt FILE] [--repo]` | a whole new device repository, its SoC layer with it; `--repo` makes it a git repository ready to push ([Port a device](index.md)) |
 | `tools/hakios-device.py sync [NAME...]` | clone or update the repositories that live elsewhere, at their revisions |
 | `tools/hakios-device.py lock NAME` | write the revision checked out into the manifest |
 | `tools/hakios-device.py split NAME DIR` | a device kept in this tree, as a git repository of its own with its history, ready to push |
@@ -114,7 +122,7 @@ cannot declare `standard` files: what every kernel has is the common repository'
 | | Android | UniXNU | HakiOS |
 |---|---|---|---|
 | the shared part | AOSP, the GKI kernel | `UniXNU` (tools, components, ARM64 support) | `hakios` (the kernel port, drivers, loader, tools) |
-| a SoC | `<soc>-common` | `UniXNU-<soc>-common` (`soc.toml`) | `socs/<soc>` (`soc.conf`) |
+| a SoC | `<soc>-common` | `UniXNU-<soc>-common` (`soc.toml`) | `soc/` inside each device repository (`soc.conf`); `socs/<soc>` for a shared one |
 | a device | `device/<vendor>/<name>` | `UniXNU-<name>` (`board.toml`) | `devices/<name>` (`device.conf`) |
 | what names them | `repo` manifest | `devices.toml` | `devices/manifest.conf` |
 | a driver | kernel module, `Kconfig` | a component repository | `drivers/<sub>/conf`, an XNU `option` |

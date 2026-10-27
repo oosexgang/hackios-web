@@ -10,7 +10,7 @@ reference for the mechanism.
 |---|---|
 | for hardware many devices share, or a SoC family's | the common repository: `drivers/<subsystem>/` |
 | one device's own (a touch controller only it has) | that device's repository: `devices/<name>/drivers/<subsystem>/` |
-| a SoC family's own | `socs/<soc>/drivers/<subsystem>/` |
+| a SoC family's own | the SoC's layer: `devices/<name>/soc/drivers/<subsystem>/` |
 
 Subsystems: input, storage, gpu, camera, haptic, audio, power, wifi, bluetooth, modem, net, core.
 

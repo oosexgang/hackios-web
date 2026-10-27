@@ -31,8 +31,9 @@ That makes `devices/mydevice/` with:
   left out**: their addresses, pins and rails are the phone they were written for, and a driver of another phone touching yours
   is the last thing you want. The drivers of your SoC (from its fragment) and QEMU's stay in.
 
-A SoC without a repository yet: make `socs/<soc>/` the same way by hand (`soc.conf`, `configs/<soc>.config`), from
-[socs/sc7280](https://github.com/oosexgang/hakios/tree/main/socs/sc7280).
+The SoC's layer comes with the device, in `devices/mydevice/soc/`: a copy of the one another device carries when the SoC is one
+HakiOS knows (`--soc sc7280` copies redwood's), or a new one to fill in for a SoC nobody has ported yet (`--soc sm8250
+--soc-title "Snapdragon 865"`). `--repo` makes the directory a git repository, ready to push as `hakios-mydevice`.
 
 **Done when** `tools/hakios-device.py check mydevice` says it holds together, and the README says which SoC values differ and you
 know why.

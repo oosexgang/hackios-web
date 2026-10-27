@@ -30,7 +30,6 @@ export const TEAM: Member[] = [
 const GH = "https://github.com/oosexgang/";
 export const REPOS = [
   { name: "hakios", url: `${GH}hakios`, key: "common" },
-  { name: "hakios-sc7280-common", url: `${GH}hakios-sc7280-common`, key: "soc" },
   { name: "hakios-redwood", url: `${GH}hakios-redwood`, key: "device" },
   { name: "hakios-uefi", url: `${GH}hakios-uefi`, key: "uefi" },
   { name: "hakios-web", url: `${GH}hakios-web`, key: "web" },
