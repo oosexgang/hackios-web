@@ -5,7 +5,7 @@ Next.js 15 (App Router, TypeScript), rendered to static pages at build time.
 
 | Page | What |
 |---|---|
-| `/<lang>` | the project, the status of each device, how it fits together, the repositories, the team, the press kit, the token |
+| `/<lang>` | the project, the status of each device, how it fits together, the repositories, the team, the press kit; the community token last, folded |
 | `/<lang>/docs/...` | the documentation of the [hakios](https://github.com/oosexgang/hakios) repository, with a table of contents |
 | `/<lang>/faq` | the questions people ask, answered short |
 
@@ -39,6 +39,7 @@ works in the repository works here (the hakios repository's `tools/docs-check.py
 | GitHub link, Telegram, team, repositories, token, press kit | `lib/site.ts` (or `NEXT_PUBLIC_GITHUB_URL`, `NEXT_PUBLIC_SITE_URL`) |
 | the documentation's sidebar | `lib/docs-nav.ts` |
 | styles | `app/globals.css` |
-| icons, share image, press kit | `npm run brand` (`scripts/brand.py`: the emblem and wordmark, the same as the UEFI's boot logo) |
+| the logo | `components/Logo.tsx` (the mark: a lowercase h and a red dot; the wordmark: hakios and the dot); `public/press/hakios-mark.svg`, `hakios-logo.svg` |
+| icons, share image | `app/[locale]/icon.svg`, `apple-icon.tsx`, `opengraph-image.tsx`; the PNG icons: `npm run brand` (`scripts/brand.py`) |
 
 Copy `.env.example` to `.env.local` for local values. The Docker image (`Dockerfile`) runs the standalone server.

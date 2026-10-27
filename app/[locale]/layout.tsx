@@ -15,7 +15,10 @@ export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
 }
 
-export const viewport: Viewport = { themeColor: "#0a0909", colorScheme: "dark", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = {
+  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#fbfaf9" }, { media: "(prefers-color-scheme: dark)", color: "#0e0d0c" }],
+  colorScheme: "light dark", width: "device-width", initialScale: 1,
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;

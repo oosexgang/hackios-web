@@ -1,17 +1,15 @@
-// The emblem and the wordmark: HAKI in paper, OS in red (the same as the UEFI's boot logo and the press kit).
-export function Emblem({ size = 28 }: { size?: number }) {
+// The mark (a lowercase h and a red dot, the core) and the wordmark (hakios and the same dot). The mark's square follows the
+// theme: dark on a light page, light on a dark one; the dot is always red.
+export function Mark({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
-      <circle cx="20" cy="23" r="13" fill="#e8170f" />
-      <rect x="13.5" y="19" width="5" height="7" rx="2.5" fill="#0a0909" />
-      <rect x="21.5" y="19" width="5" height="7" rx="2.5" fill="#0a0909" />
-      <path d="M10.5 13.5 7 4.5l8 6.2M29.5 13.5 33 4.5l-8 6.2" fill="#e8170f" />
-      <circle cx="7" cy="4.5" r="2.4" fill="#e8170f" />
-      <circle cx="33" cy="4.5" r="2.4" fill="#e8170f" />
+    <svg className="mark" width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="16" className="mark-bg" />
+      <path d="M22 14v36M22 33c0-6 4.5-9.5 9.5-9.5S41 27 41 33v17" fill="none" className="mark-h" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="45.5" cy="16.5" r="4.5" fill="#e8170f" />
     </svg>
   );
 }
 
 export function Wordmark() {
-  return <span className="wordmark">HAKI<em>OS</em></span>;
+  return <span className="wordmark">hakios<span className="dot" aria-hidden="true" /></span>;
 }

@@ -47,7 +47,7 @@ export const TOKEN = {
 };
 
 export const PRESS = [
-  { file: "hakios-emblem.png", size: "1024 x 1024", key: "emblem" },
-  { file: "hakios-header.png", size: "1500 x 500", key: "header" },
-  { file: "hakios-share.png", size: "1200 x 630", key: "share" },
+  { file: "hakios-mark.svg", key: "mark" },
+  { file: "hakios-mark.png", key: "markpng" },
+  { file: "hakios-logo.svg", key: "logo" },
 ] as const;

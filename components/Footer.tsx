@@ -1,14 +1,14 @@
 import type { Dict } from "@/lib/dict";
 import type { Locale } from "@/lib/locales";
 import { GITHUB_URL, TELEGRAM } from "@/lib/site";
-import { Emblem, Wordmark } from "./Logo";
+import { Mark, Wordmark } from "./Logo";
 
 export default function Footer({ d, locale }: { d: Dict; locale: Locale }) {
   return (
     <footer className="ftr">
       <div className="ftr-in">
         <div className="ftr-brand">
-          <Emblem size={24} />
+          <Mark size={22} />
           <Wordmark />
         </div>
         <nav className="ftr-nav">

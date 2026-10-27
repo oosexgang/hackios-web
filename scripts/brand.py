@@ -1,139 +1,81 @@
 #!/usr/bin/env python3
-"""The site's pictures in HakiOS's brand: the icons, the share image, the press kit. The same emblem and wordmark as the UEFI's
-boot logo (hakios-uefi: branding/banner.py), drawn here at any size, smoothed, as PNG, with nothing to install.
+"""The PNG icons of the site's mark: a lowercase h and a red dot on a dark rounded square (components/Logo.tsx draws the same
+in SVG, public/press/hakios-mark.svg is it as a file). Drawn here from the shapes, smoothed, with nothing to install; the favicon,
+the Apple icon and the share image are SVG or made by Next itself (app/[locale]/icon.svg, apple-icon.tsx, opengraph-image.tsx).
 
-usage: python3 scripts/brand.py          (from the repository's top; writes public/ and app/[locale]/)
+usage: python3 scripts/brand.py          (from the repository's top; writes public/)
 """
 import os
 import struct
 import zlib
 
-INK, RED, PAPER, MUTED = (10, 9, 9), (0xE8, 0x17, 0x0F), (0xEF, 0xE9, 0xE6), (0x8C, 0x81, 0x7E)
-FONT = {
-    "A": [" ### ", "#   #", "#   #", "#####", "#   #", "#   #", "#   #"],
-    "D": ["#### ", "#   #", "#   #", "#   #", "#   #", "#   #", "#### "],
-    "E": ["#####", "#    ", "#    ", "#### ", "#    ", "#    ", "#####"],
-    "H": ["#   #", "#   #", "#   #", "#####", "#   #", "#   #", "#   #"],
-    "I": ["#####", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "#####"],
-    "K": ["#   #", "#  # ", "# #  ", "##   ", "# #  ", "#  # ", "#   #"],
-    "L": ["#    ", "#    ", "#    ", "#    ", "#    ", "#    ", "#####"],
-    "N": ["#   #", "##  #", "# # #", "#  ##", "#   #", "#   #", "#   #"],
-    "O": [" ### ", "#   #", "#   #", "#   #", "#   #", "#   #", " ### "],
-    "P": ["#### ", "#   #", "#   #", "#### ", "#    ", "#    ", "#    "],
-    "R": ["#### ", "#   #", "#   #", "#### ", "# #  ", "#  # ", "#   #"],
-    "S": [" ####", "#    ", "#    ", " ### ", "    #", "    #", "#### "],
-    "W": ["#   #", "#   #", "#   #", "# # #", "# # #", "## ##", "#   #"],
-    "X": ["#   #", "#   #", " # # ", "  #  ", " # # ", "#   #", "#   #"],
-    "U": ["#   #", "#   #", "#   #", "#   #", "#   #", "#   #", " ### "],
-    "G": [" ####", "#    ", "#    ", "#  ##", "#   #", "#   #", " ### "],
-    "M": ["#   #", "## ##", "# # #", "#   #", "#   #", "#   #", "#   #"],
-    "T": ["#####", "  #  ", "  #  ", "  #  ", "  #  ", "  #  ", "  #  "],
-    " ": ["     "] * 7,
-}
-SS = 4                                      # drawn this many times larger, then averaged: smooth edges
+INK, RED, WHITE = (0x16, 0x13, 0x12), (0xE8, 0x17, 0x0F), (255, 255, 255)
+SS = 4
 
 
-class Canvas:
-    def __init__(self, w, h, bg=INK):
-        self.w, self.h = w * SS, h * SS
-        self.px = [bg] * (self.w * self.h)
+def mark(size):
+    """[(r, g, b)] of the mark at SIZE x SIZE, drawn SS times larger and averaged."""
+    n = size * SS
+    u = n / 64                                       # the SVG's units
+    px = [None] * (n * n)                            # None: transparent (outside the square)
 
-    def dot(self, x, y, c):
-        if 0 <= x < self.w and 0 <= y < self.h:
-            self.px[y * self.w + x] = c
+    def inside_square(x, y):
+        r = 16 * u
+        cx = min(max(x, r), n - r)
+        cy = min(max(y, r), n - r)
+        return (x - cx) ** 2 + (y - cy) ** 2 <= r * r
 
-    def rect(self, x0, y0, w, h, c):
-        for y in range(int(y0), int(y0 + h)):
-            for x in range(int(x0), int(x0 + w)):
-                self.dot(x, y, c)
+    for y in range(n):
+        for x in range(n):
+            if inside_square(x + .5, y + .5):
+                px[y * n + x] = INK
 
-    def disc(self, cx, cy, r, c):
-        for y in range(int(cy - r), int(cy + r) + 2):
-            for x in range(int(cx - r), int(cx + r) + 2):
-                if (x + .5 - cx) ** 2 + (y + .5 - cy) ** 2 <= r * r:
-                    self.dot(x, y, c)
+    def disc(cx, cy, r, c):
+        for y in range(int(cy - r) - 1, int(cy + r) + 2):
+            for x in range(int(cx - r) - 1, int(cx + r) + 2):
+                if 0 <= x < n and 0 <= y < n and (x + .5 - cx) ** 2 + (y + .5 - cy) ** 2 <= r * r:
+                    px[y * n + x] = c
 
-    def line(self, x0, y0, x1, y1, width, c):
-        steps = int(max(abs(x1 - x0), abs(y1 - y0)) / 2) + 1
-        for i in range(steps + 1):
-            t = i / steps
-            self.disc(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, width / 2, c)
+    def stroke(points, width, c):
+        for (x0, y0), (x1, y1) in zip(points, points[1:]):
+            steps = int(max(abs(x1 - x0), abs(y1 - y0)) * u / 1.5) + 1
+            for i in range(steps + 1):
+                t = i / steps
+                disc((x0 + (x1 - x0) * t) * u, (y0 + (y1 - y0) * t) * u, width * u / 2, c)
 
-    def emblem(self, cx, top, u):
-        """The emblem, in the logo's own units (40x40 in the site's SVG), U output pixels to one."""
-        cx, top, u = cx * SS, top * SS, u * SS
-        for side in (-1, 1):
-            self.line(cx + side * 9.5 * u, top + 9 * u, cx + side * 13 * u, top, 2.2 * u, RED)
-            self.disc(cx + side * 13 * u, top, 2.4 * u, RED)
-        self.disc(cx, top + 18.5 * u, 13 * u, RED)
-        for x0 in (cx - 6.5 * u, cx + 1.5 * u):
-            r = 2.5 * u
-            self.rect(x0, top + 14.5 * u + r, 5 * u, 7 * u - 2 * r, INK)
-            self.disc(x0 + r, top + 14.5 * u + r, r, INK)
-            self.disc(x0 + r, top + 21.5 * u - r, r, INK)
+    def cubic(p0, p1, p2, p3, k=40):
+        return [tuple((1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b + 3 * (1 - t) * t * t * c + t ** 3 * d
+                      for a, b, c, d in zip(p0, p1, p2, p3)) for t in (i / k for i in range(k + 1))]
 
-    def text(self, s, cx, y, scale, colours):
-        scale *= SS
-        width = len(s) * 6 * scale - scale
-        x = cx * SS - width / 2
-        for i, ch in enumerate(s):
-            c = colours[i] if isinstance(colours, list) else colours
-            for row, bits in enumerate(FONT[ch]):
-                for col, bit in enumerate(bits):
-                    if bit == "#":
-                        self.rect(x + col * scale, y * SS + row * scale, scale, scale, c)
-            x += 6 * scale
+    stroke([(22, 14), (22, 50)], 7, WHITE)                                       # the stem
+    arch = cubic((22, 33), (22, 27), (26.5, 23.5), (31.5, 23.5)) + cubic((31.5, 23.5), (36.5, 23.5), (41, 27), (41, 33))
+    stroke(arch + [(41, 50)], 7, WHITE)                                          # the arch and the leg
+    disc(45.5 * u, 16.5 * u, 4.5 * u, RED)                                       # the dot
 
-    def png(self, path):
-        w, h = self.w // SS, self.h // SS
-        raw = bytearray()
-        for y in range(h):
-            raw.append(0)
-            for x in range(w):
-                acc = [0, 0, 0]
-                for dy in range(SS):
-                    base = (y * SS + dy) * self.w + x * SS
-                    for dx in range(SS):
-                        p = self.px[base + dx]
+    out = []
+    for y in range(size):
+        for x in range(size):
+            acc, alpha = [0, 0, 0], 0
+            for dy in range(SS):
+                for dx in range(SS):
+                    p = px[(y * SS + dy) * n + x * SS + dx]
+                    if p is not None:
+                        alpha += 1
                         acc[0] += p[0]; acc[1] += p[1]; acc[2] += p[2]
-                raw += bytes(v // (SS * SS) for v in acc)
-        chunk = lambda t, d: struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
-        data = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + \
-            chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b"")
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        open(path, "wb").write(data)
-        print("brand: %s (%dx%d)" % (path, w, h))
+            out.append(tuple(v // alpha for v in acc) + (alpha * 255 // (SS * SS),) if alpha else (0, 0, 0, 0))
+    return out
 
 
-WORD = [PAPER, PAPER, PAPER, PAPER, RED, RED]       # HAKI in paper, OS in red
-
-
-def icon(size, path):
-    c = Canvas(size, size)
-    c.emblem(size / 2, size * 0.16, size / 40 * 0.92)
-    c.png(path)
-
-
-def share(path):
-    c = Canvas(1200, 630)
-    c.emblem(600, 70, 6.2)
-    c.text("HAKIOS", 600, 330, 16, WORD)
-    c.text("DARWIN ON ANDROID PHONES", 600, 500, 5, MUTED)
-    c.png(path)
-
-
-def main():
-    for size, path in ((192, "public/icon-192.png"), (512, "public/icon-512.png"), (512, "app/[locale]/icon.png"),
-                       (180, "app/[locale]/apple-icon.png"), (1024, "public/press/hakios-emblem.png")):
-        icon(size, path)
-    share("app/[locale]/opengraph-image.png")
-    share("app/[locale]/twitter-image.png")
-    share("public/press/hakios-share.png")
-    word = Canvas(1500, 500)
-    word.emblem(250, 95, 7)
-    word.text("HAKIOS", 900, 190, 20, WORD)
-    word.png("public/press/hakios-header.png")
+def png(path, size, pixels):
+    raw = b"".join(b"\0" + b"".join(bytes(p) for p in pixels[y * size:(y + 1) * size]) for y in range(size))
+    chunk = lambda t, d: struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+    data = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0)) + \
+        chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, "wb").write(data)
+    print("brand: %s (%dx%d)" % (path, size, size))
 
 
 if __name__ == "__main__":
-    main()
+    for size, path in ((192, "public/icon-192.png"), (512, "public/icon-512.png"), (1024, "public/press/hakios-mark.png")):
+        png(path, size, mark(size))

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { LOCALES, LOCALE_LABEL, type Locale } from "@/lib/locales";
-import { Emblem, Wordmark } from "./Logo";
+import { Mark, Wordmark } from "./Logo";
 
 type Props = {
   locale: Locale;
@@ -31,7 +31,7 @@ export default function Header({ locale, github, telegram, labels }: Props) {
     <header className="hdr">
       <div className="hdr-in">
         <a className="logo" href={`/${locale}`} aria-label="HakiOS">
-          <Emblem />
+          <Mark />
           <Wordmark />
         </a>
         <nav className={`hdr-nav${open ? " open" : ""}`} aria-label="Main">
