@@ -20,7 +20,7 @@ that you create yourself, and nowhere else. [What is written, exactly](../concep
 ## Step by step
 
 ```sh
-tools/hakios-device.py sync         # hakios-redwood (with its SoC layer) and hakios-uefi into devices/ and uefi/
+tools/hakios-device.py sync         # hakios-sm7325 (with its SoC layer) and hakios-uefi into devices/ and uefi/
 devices/redwood/pull-firmware.sh    # Android running, on adb: GPU, Wi-Fi, audio, haptics, modem, cameras -> fw-*/
 make redwood_defconfig              # the phone's configuration: the common kernel, the SC7280's, the phone's own
 make config                         # what it is: the drivers built in, the kernel's arguments, the firmware it wants

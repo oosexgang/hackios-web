@@ -81,9 +81,9 @@ the boot test itself: `./xl enter` does a `fastboot boot`, which a truly locked 
   from `/fw` of the system image, which `MODEM=1 userland/build.sh` fills from `fw-modem/`
   (`hakios.mpss.c:1045-1110`). The modem's own file systems (modemst1/2, fsc, fsg) do come from the
   phone's UFS (`ufs=2`), but in addition to the image, not instead of it. So the project's standard
-  path applies: `sysimage/fetch.sh` (iOS 16.5 from Apple's public CDN, ~7.4 GB) and
+  path applies: `sysimage/unpack.sh YOUR.ipsw` (iOS 16.5, which you supply; ~7.4 GB unpacked) and
   `PREBUILT=1 REST=1 MODEM=1 SYSTEM=1 userland/build.sh`.
-- **Build in WSL's own ext4, not on `/mnt/d`.** `fetch.sh` relies on 7z leaving files named
+- **Build in WSL's own ext4, not on `/mnt/d`.** `unpack.sh` relies on 7z leaving files named
   `NAME:com.apple.decmpfs` (finished by `unzbm`); `:` is not a legal NTFS file-name character, and
   drvfs is slow on tens of thousands of small files. A local clone in `~/hakios` plus a copy of
   `fw-*` is used; the finished `root.apfs`/`system.apfs` are copied back to the D: checkout for `xl`.
@@ -104,7 +104,7 @@ the boot test itself: `./xl enter` does a `fastboot boot`, which a truly locked 
 
 In WSL's ext4 (`~/hakios`, a local clone plus `fw-*`):
 
-- `sysimage/fetch.sh`: ~9 min. `done: 2.9G rootfs, 26M cryptex, 11M App cryptex, 2.6G dyld shared
+- `sysimage/unpack.sh`: ~9 min. `done: 2.9G rootfs, 26M cryptex, 11M App cryptex, 2.6G dyld shared
   cache` (5.7 GB in `sysimage/`); `unzbm` built by `cc`, the LZBITMAP files finished, PingFang
   trimmed 74 -> 26 MB.
 - `PREBUILT=1 REST=1 MODEM=1 SYSTEM=1 userland/build.sh`: ~4 min, exit 0. The small image got

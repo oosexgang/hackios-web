@@ -42,7 +42,7 @@ gate anything that contains Apple's code behind it.**
 
 ### What the build does that touches Apple's code (the exposure that is yours, not the user's)
 
-- `sysimage/fetch.sh` downloads parts of the IPSW from Apple's public CDN and `userland/build.sh`
+- `sysimage/unpack.sh` unpacks parts of an IPSW the user supplies (nothing is downloaded) and `userland/build.sh`
   assembles a modified root image: it selects parts of iOS, replaces launchd with `stage0`, injects
   our dylibs into SpringBoard and other Apple processes (`userland/src/inject*.c`), and
   `xnuloader/mkidentity.py` copies the iPhone's device-tree identity so the system "believes it is

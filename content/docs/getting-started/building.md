@@ -42,7 +42,7 @@ make loader          # xnuloader/build.sh: clang and lld-link, an EFI applicatio
 ```
 
 The header `xnuloader/identity.h`, the properties by which iOS tells which iPhone it is, is not kept in the repository:
-`xnuloader/mkidentity.sh` makes it at build time from the device tree in your own IPSW. `make loader-open` makes the placeholder
+`xnuloader/mkidentity.sh` makes it at build time from the device tree in your own IPSW (`sysimage/unpack.sh` leaves it in `sysimage/`). `make loader-open` makes the placeholder
 loader that boots the open kernel only.
 
 ## User space and the images

@@ -42,8 +42,8 @@
 ## Быстрый старт: QEMU, без сборки ядра
 
 В `prebuilt/` лежат собранные из этого же репозитория ядро, загрузчик и наши программы, так что нужен только
-образ системы. **Файлов iOS в репозитории нет** — скрипт сам скачивает их с серверов Apple (из IPSW iOS 16.5
-для iPhone X) и раскладывает.
+образ системы. **Файлов iOS в репозитории нет** — IPSW iOS 16.5 для iPhone X вы берёте сами,
+скрипт только распаковывает из него нужное.
 
 Нужно: Linux x86-64, ~12 ГБ свободного места (готовое занимает ~8 ГБ), от 4 ГБ свободной памяти. Пакеты (Arch):
 
@@ -56,7 +56,7 @@ sudo pacman -S --needed git python 7zip lz4 gcc qemu-system-aarch64 qemu-ui-gtk 
 ```sh
 git clone git@github.com:vcvkk/darwin-redwood.git
 cd darwin-redwood
-sysimage/fetch.sh               # скачивает 7,4 ГБ с CDN Apple и распаковывает нужное (минут 5–15)
+sysimage/unpack.sh ~/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # ваш IPSW: распаковывает нужное
 REST=1 userland/build.sh      # собирает образы APFS: userland/root.apfs и userland/system.apfs (2,5 ГБ)
 mkdir -p logs
 qemu/run-ios.sh 1200 -display gtk > logs/qemu.log     # сеанс на 20 минут
@@ -65,9 +65,8 @@ qemu/run-ios.sh 1200 -display gtk > logs/qemu.log     # сеанс на 20 ми�
 Через 2–3 минуты в окне появится экран блокировки.
 
 **Сколько это занимает.** Измерено 20 октября на этой машине (Linux x86-64, 12 потоков, NVMe), проходом
-по этим самым командам из чистого клона: `sysimage/fetch.sh` — 1 мин 45 с, из них скачивание криптексов
-2,7 ГБ (образ корня, 4,7 ГБ, в этом прогоне уже лежал рядом; с нуля к этому времени добавится его
-скачивание — на том же канале около трёх минут); `REST=1 userland/build.sh` — 1 мин 52 с; QEMU до
+по этим самым командам из чистого клона: `sysimage/unpack.sh` — 1 мин 45 с
+(тогда скрипт ещё сам качал образы; теперь IPSW вы кладёте сами, и остаётся только распаковка); `REST=1 userland/build.sh` — 1 мин 52 с; QEMU до
 экрана блокировки — ещё 2–3 минуты. То есть около восьми минут от пустого каталога до iOS, если канал
 отдаёт порядка 25 МБ/с; сборка ядра и загрузчика в это не входит и не нужна — они в `prebuilt/`.
 
@@ -197,7 +196,7 @@ codec DMA TX_CDC_DMA_TX_3 и звуковой процессор в поток, 
   CoreGraphics в них не рисовал — плитки оставались нулями. Теперь загрузчик пишет в дерево sRGB, как и есть у
   нашего кадрового буфера, и WebKit рисует в BGRA (`xnuloader/loader.c`, `dt_identity()`; проверка —
   `RC_JOBS=rc.jobs.safari`). Цветные эмодзи и китайский шрифт PingFang (130 и 74 МБ) целиком в образ системы не
-  помещаются, и их знаки выходили квадратиками с вопросом; теперь `sysimage/fetch.sh` кладёт их в образ уменьшенными
+  помещаются, и их знаки выходили квадратиками с вопросом; теперь `sysimage/unpack.sh` кладёт их в образ уменьшенными
   (`tools/font_trim.py`): эмодзи — без самых крупных картинок (остаются 40, 64 и 96 точек; 59 МБ), PingFang — с
   обычным и полужирным начертаниями упрощённого, традиционного и гонконгского письма (26 МБ). Проверка —
   `RC_JOBS=rc.jobs.fonts` (`font_test`: к какому шрифту система идёт за эмодзи, китайским, японским и корейским и
@@ -234,7 +233,7 @@ codec DMA TX_CDC_DMA_TX_3 и звуковой процессор в поток, 
 ## На телефоне
 
 Нужен именно **POCO X5 Pro 5G (redwood)** с разблокированным загрузчиком, `adb` и `fastboot` на компьютере
-(`sudo pacman -S android-tools`), и образы из предыдущего раздела (`sysimage/fetch.sh`, `REST=1 userland/build.sh`).
+(`sudo pacman -S android-tools`), и образы из предыдущего раздела (`sysimage/unpack.sh`, `REST=1 userland/build.sh`).
 
 **Прошивка самого телефона.** В репозитории её нет и быть не может: она вендорская и берётся с того самого
 аппарата, на котором всё будет работать, из его Android (подробности — в разделах по каждому устройству):
@@ -1710,7 +1709,7 @@ xnuloader/build.sh        # clang + lld-link → xnuloader/loader.efi (EFI-пр�
 ```
 
 `xnuloader/identity.h` генерируется при сборке `xnuloader/mkidentity.sh` (через `mkidentity.py`) из дерева устройств
-iPhone X в вашем IPSW (так система узнаёт, «какой она iPhone»); в репозитории его нет. Вручную: `python3 sysimage/fetch-from-ipsw.py Firmware/all_flash/DeviceTree.d22ap.im4p dt.im4p`,
+iPhone X в вашем IPSW (так система узнаёт, «какой она iPhone»); в репозитории его нет. Вручную: `python3 sysimage/ipsw-member.py ВАШ.ipsw Firmware/all_flash/DeviceTree.d22ap.im4p dt.im4p`,
 `ipsw img4 im4p extract dt.im4p -o dt.bin`, `xnuloader/mkidentity.py dt.bin > xnuloader/identity.h`. Кроме свойств
 корня и `/product` оттуда же берётся узел `/product/haptics` (`closed-loop`, `supports-3rd-party-haptics`): по нему
 MobileGestalt отвечает `DeviceSupportsClosedLoopHaptics`, и iOS играет вибрацию и отклики волнами на устройстве
@@ -3235,7 +3234,7 @@ iOS, которого она ждёт, — это уже другое: созд�
 
 ## Про файлы Apple и лицензии
 
-- Файлов iOS в репозитории нет: `sysimage/fetch.sh` скачивает их из IPSW с CDN Apple на вашу машину.
+- Файлов iOS в репозитории нет: IPSW вы берёте сами, `sysimage/unpack.sh` распаковывает его на вашей машине; ничего не скачивается.
 - `xnu/` — производная работа от XNU, распространяется на условиях APSL 2.0, как и сам XNU; `prebuilt/mach.*` —
   ядро, собранное из этих исходников.
 - `xnu/files/bsd/miscfs/apfs/libzbitmap/` — декодер LZBITMAP libzbitmap (Corellium LLC, GPL-2.0+ OR MIT; здесь —

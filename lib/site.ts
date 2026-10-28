@@ -30,9 +30,8 @@ export const TEAM: Member[] = [
 const GH = "https://github.com/oosexgang/";
 export const REPOS = [
   { name: "hakios", url: `${GH}hakios`, key: "common" },
-  { name: "hakios-redwood", url: `${GH}hakios-redwood`, key: "device" },
+  { name: "hakios-sm7325", url: `${GH}hakios-sm7325`, key: "device" },
   { name: "hakios-uefi", url: `${GH}hakios-uefi`, key: "uefi" },
-  { name: "hakios-web", url: `${GH}hakios-web`, key: "web" },
 ] as const;
 
 // The community token keeps the ticker it was issued with on chain.

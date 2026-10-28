@@ -7,7 +7,7 @@ Everything here was done on a real machine and phone; `tools/doctor.sh` checks t
 
 | Job | Where | Why |
 |---|---|---|
-| Build the images (`sysimage/fetch.sh`, `userland/build.sh`) | **WSL 2, in its own filesystem** (`~/hakios`) | `fetch.sh` makes files named `NAME:com.apple.decmpfs`; NTFS forbids `:`. The Windows drive is also slow for tens of thousands of small files. |
+| Build the images (`sysimage/unpack.sh`, `userland/build.sh`) | **WSL 2, in its own filesystem** (`~/hakios`) | `unpack.sh` makes files named `NAME:com.apple.decmpfs`; NTFS forbids `:`. The Windows drive is also slow for tens of thousands of small files. |
 | Drive the phone (`./xl`, `tools/modem-cycle-win.sh`) | **Git Bash**, in your Windows checkout | `fastboot` and `adb` are Windows programs that see the phone's USB; WSL 2 does not, without usbipd. |
 
 So: build in WSL, copy `userland/root.apfs` and `userland/system.apfs` to the Windows checkout, run `xl`
@@ -41,7 +41,7 @@ from Git Bash.
 
 ```sh
 # WSL, in ~/hakios (a clone in WSL's own filesystem, with fw-*/ copied in):
-sysimage/fetch.sh                                        # iOS 16.5 from Apple's servers, ~9 min
+sysimage/unpack.sh ~/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # your own IPSW, ~5 min
 PREBUILT=1 REST=1 MODEM=1 SYSTEM=1 userland/build.sh     # root.apfs + system.apfs, ~4 min, no theos needed
 cp userland/root.apfs userland/system.apfs /mnt/d/.../hakios/userland/
 

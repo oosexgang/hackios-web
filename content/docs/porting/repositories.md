@@ -82,7 +82,7 @@ repository of its own in `socs/<soc>/` (a `soc` block in the manifest); the tool
 
 ```
 device redwood
-	repository  https://github.com/oosexgang/hakios-redwood.git
+	repository  https://github.com/oosexgang/hakios-sm7325.git
 	revision    
 
 device qemu

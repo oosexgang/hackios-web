@@ -22,7 +22,7 @@ Linux x86-64, about 12 GB of disk, 7-Zip 23 or newer, `lz4`, `qemu-system-aarch6
 
 ```sh
 make doctor                   # QEMU's display device, UEFI firmware, memory: what is missing, and what to do
-sysimage/fetch.sh             # the iOS 16.5 IPSW from Apple's servers, the needed parts unpacked (7.4 GB)
+sysimage/unpack.sh ~/iPhone10,3,iPhone10,6_16.5_20F66_Restore.ipsw   # YOUR IPSW: the needed parts unpacked (7.4 GB)
 REST=1 userland/build.sh      # the APFS images: userland/root.apfs and userland/system.apfs
 make loader                   # the boot loader, with the iPhone's identity taken from YOUR copy of the IPSW
 mkdir -p logs
