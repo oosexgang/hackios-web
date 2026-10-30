@@ -8,7 +8,7 @@ import { SITE_URL, TELEGRAM, GITHUB_URL } from "@/lib/site";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const sans = Inter({ subsets: ["latin", "cyrillic"], weight: ["400", "500", "600", "700"], variable: "--font-sans", display: "swap" });
+const sans = Inter({ subsets: ["latin", "cyrillic"], weight: ["400", "500", "600", "700", "800", "900"], variable: "--font-sans", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin", "cyrillic"], weight: ["400", "500", "700"], variable: "--font-mono", display: "swap" });
 
 export function generateStaticParams() {
@@ -16,7 +16,7 @@ export function generateStaticParams() {
 }
 
 export const viewport: Viewport = {
-  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#fbfaf9" }, { media: "(prefers-color-scheme: dark)", color: "#0e0d0c" }],
+  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#ece6d3" }, { media: "(prefers-color-scheme: dark)", color: "#17180f" }],
   colorScheme: "light dark", width: "device-width", initialScale: 1,
 };
 
@@ -56,7 +56,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
     <html lang={HTML_LANG[locale as Locale]} className={`${sans.variable} ${mono.variable}`}>
       <body id="top">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        <Header locale={locale as Locale} github={GITHUB_URL} telegram={TELEGRAM.url} labels={{ menu: d.menu, close: d.close, nav: d.nav }} />
+        <Header locale={locale as Locale} github={GITHUB_URL} telegram={TELEGRAM.url} search={{ label: d.search, placeholder: d.search_ph, empty: d.search_empty }} labels={{ menu: d.menu, close: d.close, nav: d.nav }} />
         {children}
         <Footer d={d} locale={locale as Locale} />
       </body>

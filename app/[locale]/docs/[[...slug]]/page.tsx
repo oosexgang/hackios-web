@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { LOCALES, isLocale, type Locale } from "@/lib/locales";
 import { getDict } from "@/lib/dict";
 import { allSlugs, loadDoc, neighbours } from "@/lib/docs";
-import { NAV } from "@/lib/docs-nav";
 import { REPO_FILES } from "@/lib/site";
+import DocsShell from "@/components/DocsShell";
 
 type Params = { params: Promise<{ locale: string; slug?: string[] }> };
 
@@ -21,44 +21,25 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function DocPage({ params }: Params) {
   const { locale, slug } = await params;
   if (!isLocale(locale)) notFound();
-  const d = getDict(locale as Locale);
+  const L = locale as Locale;
+  const d = getDict(L);
   const path = (slug || []).join("/");
-  const doc = loadDoc(path, locale);
+  const doc = loadDoc(path, L);
   if (!doc) notFound();
   const { prev, next } = neighbours(path);
-  const base = `/${locale}/docs`;
-  const href = (s: string) => (s ? `${base}/${s}` : base);
-  const toc = doc.headings.filter((h) => h.depth === 2 || h.depth === 3);
-
+  const href = (s: string) => `/${L}/docs${s ? `/${s}` : ""}`;
   return (
-    <main className="docs wrap">
-      <aside className="docs-nav" aria-label={d.docs_t}>
-        {NAV.map((sec) => (
-          <div key={sec.title}>
-            <p className="nav-h">{sec.title}</p>
-            <ul>
-              {sec.items.map((it) => (
-                <li key={it.slug}><a href={href(it.slug)} aria-current={it.slug === path ? "page" : undefined}>{it.title}</a></li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </aside>
-      <article className="doc">
-        {locale !== "en" && <p className="lang-note">{d.docs_lang}</p>}
-        <div className="prose" dangerouslySetInnerHTML={{ __html: doc.html }} />
-        <nav className="pager">
-          {prev ? <a href={href(prev.slug)}><small>{d.docs_prev}</small>{prev.title}</a> : <span />}
-          {next ? <a className="next" href={href(next.slug)}><small>{d.docs_next}</small>{next.title}</a> : <span />}
-        </nav>
-        <p className="small"><a href={`${REPO_FILES}${doc.source}`} target="_blank" rel="noopener">{d.docs_source}</a></p>
-      </article>
-      {toc.length > 2 && (
-        <aside className="docs-toc">
-          <p className="nav-h">{d.docs_toc}</p>
-          <ul>{toc.map((h) => <li key={h.id} className={`d${h.depth}`}><a href={`#${h.id}`}>{h.text}</a></li>)}</ul>
-        </aside>
-      )}
-    </main>
+    <DocsShell
+      locale={L}
+      d={d}
+      current={href(path)}
+      section={d.docs_ref}
+      note={L !== "en" ? `${d.docs_lang} ${d.docs_ref_note}` : d.docs_ref_note}
+      html={doc.html}
+      headings={doc.headings}
+      prev={prev ? { title: prev.title, href: href(prev.slug) } : undefined}
+      next={next ? { title: next.title, href: href(next.slug) } : undefined}
+      source={{ href: `${REPO_FILES}${doc.source}`, label: d.docs_source }}
+    />
   );
 }

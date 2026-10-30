@@ -12,7 +12,8 @@ export default function Footer({ d, locale }: { d: Dict; locale: Locale }) {
           <Wordmark />
         </div>
         <nav className="ftr-nav">
-          <a href={`/${locale}/docs`}>{d.nav.docs}</a>
+          <a href={`/${locale}/guide`}>{d.nav.docs}</a>
+          <a href={`/${locale}/docs`}>{d.docs_ref}</a>
           <a href={`/${locale}/docs/devices`}>{d.nav.devices}</a>
           <a href={`/${locale}/faq`}>{d.nav.faq}</a>
           <a href={GITHUB_URL} target="_blank" rel="noopener">{d.nav.github}</a>

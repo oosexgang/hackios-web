@@ -3,15 +3,17 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { LOCALES, LOCALE_LABEL, type Locale } from "@/lib/locales";
 import { Mark, Wordmark } from "./Logo";
+import Search from "./Search";
 
 type Props = {
   locale: Locale;
   github: string;
   telegram: string;
+  search: { label: string; placeholder: string; empty: string };
   labels: { menu: string; close: string; nav: { home: string; docs: string; devices: string; changelog: string; faq: string; github: string; telegram: string } };
 };
 
-export default function Header({ locale, github, telegram, labels }: Props) {
+export default function Header({ locale, github, telegram, search, labels }: Props) {
   const [open, setOpen] = useState(false);
   const path = usePathname() || `/${locale}`;
   useEffect(() => setOpen(false), [path]);
@@ -24,8 +26,9 @@ export default function Header({ locale, github, telegram, labels }: Props) {
   const rest = path.replace(/^\/[a-z]{2}(?=\/|$)/, "");
   const remember = (l: Locale) => { document.cookie = `lang=${l}; path=/; max-age=31536000; samesite=lax`; };
   const n = labels.nav;
-  const links: [string, string][] = [[`/${locale}/docs`, n.docs], [`/${locale}/docs/devices`, n.devices], [`/${locale}/changelog`, n.changelog], [`/${locale}/faq`, n.faq]];
-  const here = (href: string) => (href === `/${locale}/docs` ? path.startsWith(href) && !path.startsWith(`${href}/devices`) : path.startsWith(href));
+  const links: [string, string][] = [[`/${locale}/guide`, n.docs], [`/${locale}/docs/devices`, n.devices], [`/${locale}/changelog`, n.changelog], [`/${locale}/faq`, n.faq]];
+  const here = (href: string) =>
+    href === `/${locale}/guide` ? path.startsWith(href) || (path.startsWith(`/${locale}/docs`) && !path.startsWith(`/${locale}/docs/devices`)) : path.startsWith(href);
 
   return (
     <header className="hdr">
@@ -34,6 +37,7 @@ export default function Header({ locale, github, telegram, labels }: Props) {
           <Mark />
           <Wordmark />
         </a>
+        <Search locale={locale} label={search.label} placeholder={search.placeholder} empty={search.empty} />
         <nav className={`hdr-nav${open ? " open" : ""}`} aria-label="Main">
           {links.map(([href, text]) => (
             <a key={href} href={href} aria-current={here(href) ? "page" : undefined}>{text}</a>
