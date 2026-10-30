@@ -74,14 +74,14 @@ the boot test itself: `./xl enter` does a `fastboot boot`, which a truly locked 
   `prebuilt/loader.efi` when nothing is built (`xl:50-53,120`): those are the `redwood` kernel and
   loader, i.e. for this SoC. The toolchain is only needed to build a *changed* kernel (which the
   cellular fix eventually is).
-- **The iOS system image IS needed for a modem run** (a correction: the first run proved the
+- **The Darwin system image IS needed for a modem run** (a correction: the first run proved the
   earlier assumption wrong). With no ramdisk at all (`XL_RAMDISK=none`) the kernel panics before
   the modem thread starts -- `Failed to mount root device @IOKitBSDInit.cpp:926` -- because the
   modem steps run "once the root is there" (`hakios.mpss.c:6256`). And the modem's firmware is read
   from `/fw` of the system image, which `MODEM=1 userland/build.sh` fills from `fw-modem/`
   (`hakios.mpss.c:1045-1110`). The modem's own file systems (modemst1/2, fsc, fsg) do come from the
   phone's UFS (`ufs=2`), but in addition to the image, not instead of it. So the project's standard
-  path applies: `sysimage/unpack.sh YOUR.ipsw` (iOS 16.5, which you supply; ~7.4 GB unpacked) and
+  path applies: `sysimage/unpack.sh YOUR.ipsw` (Darwin userland 16.5, which you supply; ~7.4 GB unpacked) and
   `PREBUILT=1 REST=1 MODEM=1 SYSTEM=1 userland/build.sh`.
 - **Build in WSL's own ext4, not on `/mnt/d`.** `unpack.sh` relies on 7z leaving files named
   `NAME:com.apple.decmpfs` (finished by `unzbm`); `:` is not a legal NTFS file-name character, and

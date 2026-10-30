@@ -69,11 +69,11 @@ and, in the failure path, drive `PIN_AVDD` low and clear the votes.
 
 ### F3. Device node is world read/write (input.c:213)
 
-`devfs_make_node(..., UID_ROOT, GID_WHEEL, 0666, "hakios-touch")`; `touch_open` (143-147) does no check. Any process that can open the node (subject to whatever sandbox the iOS userland applies; not examined here) can:
+`devfs_make_node(..., UID_ROOT, GID_WHEEL, 0666, "hakios-touch")`; `touch_open` (143-147) does no check. Any process that can open the node (subject to whatever sandbox the Darwin userland applies; not examined here) can:
 - `write()` records: forged DOWN/MOVE/UP samples and `HAKIOS_BUTTON_DOWN/UP` with `finger = HAKIOS_BUTTON_LOCK`, which backboardd turns into the power key (inject.c:871-879). Only the five-finger exit is protected (it counts driver fingers only, input.c:130).
 - `read()`: steal the real touch stream (any reader takes records away from backboardd, since there is one shared queue with no exclusive open).
 
-Whether this matters depends on the iOS sandbox profile for third-party apps; in the kernel there is no restriction.
+Whether this matters depends on the Darwin sandbox profile for third-party apps; in the kernel there is no restriction.
 
 Fix: `0600` (or `0660` with a dedicated group) and, if backboardd runs as another user, set that uid/gid in `devfs_make_node`; optionally make `touch_open` return `EBUSY` for a second opener.
 
@@ -187,7 +187,7 @@ virtio_input.c:
 - Whether a Goodix finger lift is always reported as a status with the touch bit and zero count: if the chip instead reports status 0, `goodix_poll` returns at line 857 without posting UP and the finger stays down. NEEDS-HARDWARE; a hand test is noted in the buttons comment but not for this.
 - The content of `focaltech_fw` (706 KB array) and its provenance.
 - Whether the PRAM download can touch persistent flash, and whether the vendor flow's own integrity step exists in the boot ROM.
-- The iOS sandbox profile for `/dev/hakios-touch` (F3 impact).
+- The Darwin sandbox profile for `/dev/hakios-touch` (F3 impact).
 - Build correctness (flags of `kmem_alloc`, `__builtin_arm_dmb` use) and the other drivers in the tree, other than reading the lines named above for `hakios_rsc_lock`.
 
 ## Fix status

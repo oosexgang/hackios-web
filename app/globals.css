@@ -129,6 +129,14 @@ th{font-weight:600;color:var(--muted);font-size:13px}
 .faq details[open] summary::after{content:"-"}
 .faq summary::-webkit-details-marker{display:none}
 .faq details p{color:var(--soft);margin:0 0 16px}
+.changelog{padding-top:48px;padding-bottom:40px;max-width:760px}
+.changelog h1{font-size:40px;margin:0 0 8px}
+.changelog section{border-top:1px solid var(--line);padding:18px 0 4px;scroll-margin-top:80px}
+.changelog h2{font-family:var(--mono);font-size:15px;font-weight:600;margin:0 0 6px}
+.changelog h2 a{color:var(--text);text-decoration:none}
+.changelog h2 a:hover{color:var(--red)}
+.changelog ul{margin:0 0 12px;padding-left:20px}
+.changelog li{margin-bottom:6px}
 
 /* footer */
 .ftr{border-top:1px solid var(--line);margin-top:64px}

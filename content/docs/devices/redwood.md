@@ -9,7 +9,7 @@
 | SoC | `sc7280` |
 | Configuration | `make redwood_defconfig` |
 | Maintainer | the HakiOS developers (README.md) |
-| Repository | [`devices/redwood/`](https://github.com/oosexgang/hakios/tree/main/devices/redwood) |
+| Repository | [hakios-sm7325](https://github.com/oosexgang/hakios-sm7325) |
 | Firmware | `devices/redwood/pull-firmware.sh` pulls it from your own phone |
 
 ## What works

@@ -40,7 +40,7 @@ for IPA 4.11; everything is in `drivers/modem/hakios.ipa.c` and `hakios.cell.c`.
 - The rings are polled by the interface's thread; no interrupt is taken from the GSI.
 - The modem's packets are an Ethernet-looking interface, `en1`, with a made-up router behind it.
   The kernel answers ARP for every address and DHCP with the session's address, a /24 around it,
-  the router and the DNS servers, so iOS's configd configures `en1` as it would a USB Ethernet
+  the router and the DNS servers, so Darwin's configd configures `en1` as it would a USB Ethernet
   adapter and routes through it. IPv6 is not carried.
 - The modem is told about this side the way ModemManager does for a phone behind the IPA
   (`net_driver == "ipa"`): **DPM Open Port** (Data Port Mapper) names the embedded port's IPA
@@ -53,7 +53,7 @@ for IPA 4.11; everything is in `drivers/modem/hakios.ipa.c` and `hakios.cell.c`.
 - The rings are polled by the interface's thread; no interrupt is taken from the GSI.
 - The modem's packets are an Ethernet-looking interface, `en1`, with a made-up router behind it.
   The kernel answers ARP for every address and DHCP with the session's address, a /24 around it,
-  the router and the DNS servers, so iOS's configd configures `en1` as it would a USB Ethernet
+  the router and the DNS servers, so Darwin's configd configures `en1` as it would a USB Ethernet
   adapter and routes through it. IPv6 is not carried.
 - `modem_ipa_data_off=1` leaves all of this out; `modem_dpm_off=1` / `modem_wda_off=1` skip those
   steps; `modem_ipa_data_trace=1` logs every packet.

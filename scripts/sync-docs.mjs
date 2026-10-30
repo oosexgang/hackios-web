@@ -1,11 +1,11 @@
 // Copy the documentation from the hakios repository into content/docs, where the site reads it.
-//   npm run docs                    from ../hakios (next to this repository)
+//   npm run docs                    from ../hakios-xnu-kernel (next to this repository)
 //   npm run docs -- /path/to/hakios
 // The copy is committed, so that the site builds without the hakios repository beside it.
 import fs from "node:fs";
 import path from "node:path";
 
-const from = path.resolve(process.argv[2] || "../hakios", "docs");
+const from = path.resolve(process.argv[2] || "../hakios-xnu-kernel", "docs");
 const to = path.resolve("content", "docs");
 if (!fs.existsSync(path.join(from, "index.md"))) {
   console.error(`sync-docs: no ${from}/index.md: give the hakios repository's path (npm run docs -- /path/to/hakios)`);
@@ -21,4 +21,7 @@ const copy = (a, b) => {
   }
 };
 copy(from, to);
+// ... and the changelog beside the documentation (the /changelog page)
+const changelog = path.join(path.dirname(from), "CHANGELOG.md");
+if (fs.existsSync(changelog)) fs.copyFileSync(changelog, path.resolve("content", "changelog.md"));
 console.log(`sync-docs: ${n} pages from ${from}`);

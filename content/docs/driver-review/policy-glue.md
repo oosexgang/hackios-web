@@ -142,12 +142,12 @@ Every node the port creates, with mode and owner:
 | /dev/md*, /dev/rmd* | Apple bsd/dev/memdev.c:686-697 (unchanged) | 0600 root:operator | RAM disks, including the second image added at patch:1713-1723 |
 
 Can an unprivileged process read the phone's raw storage? Not directly: /dev/ufs_* and /dev/rufs_* are 0640
-root:operator (owner root, group operator read-only; on iOS the group has only root in it), /dev/rvblk0 and /dev/rsp0
+root:operator (owner root, group operator read-only; on Darwin the group has only root in it), /dev/rvblk0 and /dev/rsp0
 are 0600. With P1, any process can reach root and therefore all of them. The write path to /dev/rufs_darwin is bounded
 (see "Checked and found fine").
 
 The code does no check of its own in any `d_open` (`touch_open`, `audio_open`, `mic_dev_open`, `camdev_open`,
-`haptic_open`, `torch_open`); file mode is the only gate. Whether the iOS sandbox adds one is out of reach here (the
+`haptic_open`, `torch_open`); file mode is the only gate. Whether the Darwin sandbox adds one is out of reach here (the
 Sandbox is a stub that allows everything, kern_minimac.c:230-242).
 
 Fix: create these nodes 0600 root:wheel, or 0660 with the group of the one daemon that uses each (backboardd for touch,
@@ -364,7 +364,7 @@ Surface
   hakios.battery.cpp (external methods, shared memory): outside the file list given to me.
 - bsd/miscfs/ramfs and apfs vnode operations: how ownership, setuid bits and `access` are enforced there (ramfs stores
   `va_mode & ALLPERMS`, ramfs.c:152, 1032).
-- What iOS user space does with the stub answers: whether cfprefsd, lsd or containermanagerd use P7's container path
+- What Darwin user space does with the stub answers: whether cfprefsd, lsd or containermanagerd use P7's container path
   for an access decision; whether dyld honours DYLD_* for setuid programs given the allow-all AMFI answer; whether this
   port ships any setuid-root program; whether `task_for_pid` is otherwise gated for ad hoc signed callers.
 - Behaviour on hardware: P2's effect on the speakers, whether the Sandbox stub's `0` for unknown requests produces

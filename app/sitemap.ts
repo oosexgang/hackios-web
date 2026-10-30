@@ -5,7 +5,7 @@ import { allSlugs } from "@/lib/docs";
 
 // every page in every language: the home page, the FAQ, each page of the documentation
 export default function sitemap(): MetadataRoute.Sitemap {
-  const paths = ["", "/faq", ...allSlugs().map((s) => (s ? `/docs/${s}` : "/docs"))];
+  const paths = ["", "/faq", "/changelog", ...allSlugs().map((s) => (s ? `/docs/${s}` : "/docs"))];
   return LOCALES.flatMap((l) => paths.map((p) => ({
     url: `${SITE_URL}/${l}${p}`,
     lastModified: new Date(),

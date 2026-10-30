@@ -230,7 +230,9 @@ The rest of the installed image's command line is the configuration's (`tools/ha
 `adsp`, `sound` and `haptic`, which stopped the phone under U-Boot: `gpu=1 wifi=1 modem=1 modem_again=1
 modem_buffer=0xa8000000 socinfo=1 thermal=1`. And `userland/build.sh` with `GL=1` (Mesa: `tools/mk-mesa.sh`): without
 `libhakios.gl.dylib` in the image CoreAnimation draws with its software renderer whatever the GPU does -- slow, and
-the wallpaper black ("Failed to initialize Metal or OpenGLES contexts!").
+the wallpaper black ("Failed to initialize Metal or OpenGLES contexts!"). And `REST=1`: without it the image has
+25 of the system's jobs and none of the launch angels, so PosterBoard (the wallpaper) never starts and the applications
+that need one of the other services do not open: `GL=1 REST=1 CRYPTEXES=flash FLASHBOOT=1 userland/build.sh`.
 
 Tried in QEMU first (`qemu/run-hfs-test.sh`; Darwin with `virtio_blk=2 var_hfs=rvblk0`): written, stopped hard, the journal
 replayed at the next mount, the files there. The volume's root has to be root's (`mkfs.hfsplus -U 0 -G 0 -M 755`, as

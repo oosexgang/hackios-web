@@ -8,7 +8,7 @@ type Props = {
   locale: Locale;
   github: string;
   telegram: string;
-  labels: { menu: string; close: string; nav: { home: string; docs: string; devices: string; faq: string; github: string; telegram: string } };
+  labels: { menu: string; close: string; nav: { home: string; docs: string; devices: string; changelog: string; faq: string; github: string; telegram: string } };
 };
 
 export default function Header({ locale, github, telegram, labels }: Props) {
@@ -24,7 +24,7 @@ export default function Header({ locale, github, telegram, labels }: Props) {
   const rest = path.replace(/^\/[a-z]{2}(?=\/|$)/, "");
   const remember = (l: Locale) => { document.cookie = `lang=${l}; path=/; max-age=31536000; samesite=lax`; };
   const n = labels.nav;
-  const links: [string, string][] = [[`/${locale}/docs`, n.docs], [`/${locale}/docs/devices`, n.devices], [`/${locale}/faq`, n.faq]];
+  const links: [string, string][] = [[`/${locale}/docs`, n.docs], [`/${locale}/docs/devices`, n.devices], [`/${locale}/changelog`, n.changelog], [`/${locale}/faq`, n.faq]];
   const here = (href: string) => (href === `/${locale}/docs` ? path.startsWith(href) && !path.startsWith(`${href}/devices`) : path.startsWith(href));
 
   return (

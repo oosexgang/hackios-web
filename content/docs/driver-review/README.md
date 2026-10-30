@@ -34,9 +34,9 @@ These are in the reports; they are listed here because a fix is a choice, not a 
    single-user.
 2. **`PRIV_NET_PRIVILEGED_SOCKET_DELEGATE` granted to every credential** (P4, patch). Same kind of choice.
 3. **Six device nodes are mode 0666** (P3: touch, audio, microphone, camera, haptic, flashlight): any process can
-   read the microphone and the camera and read or forge the touch stream. They are open because every iOS daemon,
+   read the microphone and the camera and read or forge the touch stream. They are open because every Darwin daemon,
    whatever its user, has to reach them today; tightening them means choosing which user gets which node, and
-   that needs the iOS user space running to check. The volume ioctl that made the audio node dangerous is fixed;
+   that needs the Darwin user space running to check. The volume ioctl that made the audio node dangerous is fixed;
    the modes are not changed. Until this is decided, a process on this system is trusted with the sensors.
 4. **GPU command streams are not validated and no `CP_PROTECT` table is written** (gpu-display G1). A client can
    make the GPU write anywhere its SMMU context reaches. Needs hardware knowledge of the Adreno's protection
@@ -48,7 +48,7 @@ These are in the reports; they are listed here because a fix is a choice, not a 
 7. **Wi-Fi: a forged message 1 before message 3 can still fail a join** (wifi-stack W1, rest of it): the proper fix
    keeps a candidate key set and needs a change to the header the supplicant shares with the 802.11 layer.
 8. **The vsync notification is now sent with the framebuffer's lock held** (input/gpu fix G8). It closes a
-   use-after-release of the notification port; it was not run with the iOS user space. If a deadlock shows up in
+   use-after-release of the notification port; it was not run with the Darwin user space. If a deadlock shows up in
    `IOMobileFramebufferUserClient::vsync`, that is the place to look.
 
 ## What the audits did not cover
