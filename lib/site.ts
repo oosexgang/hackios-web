@@ -1,9 +1,9 @@
 // Everything about the project that is not translated lives here.
 
 // The project's code. NEXT_PUBLIC_GITHUB_URL in the hosting dashboard overrides it.
-export const GITHUB_URL = process.env.NEXT_PUBLIC_GITHUB_URL || "https://github.com/oosexgang/hakios";
+export const GITHUB_URL = process.env.NEXT_PUBLIC_GITHUB_URL || "https://github.com/oosexgang/hakios-xnu-kernel";
 // where a link of the documentation to a file of the repository (not a page) goes
-export const REPO_FILES = `${GITHUB_URL}/blob/main/`;
+export const REPO_FILES = `${GITHUB_URL}/blob/hakios/`;          // the branch the work is on
 
 // The public address of the site. Used for canonical URLs, Open Graph tags and the sitemap.
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://hakios.example").replace(/\/$/, "");
@@ -29,9 +29,10 @@ export const TEAM: Member[] = [
 // The repositories, as the documentation's "How the repositories fit" describes them.
 const GH = "https://github.com/oosexgang/";
 export const REPOS = [
-  { name: "hakios", url: `${GH}hakios`, key: "common" },
+  { name: "hakios-xnu-kernel", url: `${GH}hakios-xnu-kernel/tree/hakios`, key: "common" },
   { name: "hakios-sm7325", url: `${GH}hakios-sm7325`, key: "device" },
   { name: "hakios-uefi", url: `${GH}hakios-uefi`, key: "uefi" },
+  { name: "hakios-metal", url: `${GH}hakios-metal`, key: "metal" },
 ] as const;
 
 // The community token keeps the ticker it was issued with on chain.

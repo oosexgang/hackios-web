@@ -13,8 +13,8 @@ verify something, it says so.
 | Layer | Verdict | Why |
 |---|---|---|
 | The open code (kernel patch under APSL 2.0, our loader/tools/userland under MIT) | **Fine, with homework done well.** | `COMPLIANCE.md` is a solid checklist: source published, Apple's notices kept, XNU-derived code not relabelled MIT. |
-| **Running iOS on non-Apple hardware** | **Grey, and a breach of Apple's licence for whoever does it.** | The licence grants use "on a single Apple-branded Device" and forbids copying/decrypting/modifying/deriving ([iOS 16 licence](https://www.apple.com/legal/sla/docs/iOS16_iPadOS16.pdf), §2(a), §2(d)). Not distributing iOS is the right mitigation and you do it. Courts split on the rest (below). |
-| **Four things in the repo that contradict its own legal statements** | **Fix before anything else.** | Vendor blobs tracked in git, iOS screenshots still in history, App Store/FairPlay experiments plus an iPhone identity, "iOS" emphasised in the brand. Details below. |
+| **Running Darwin on non-Apple hardware** | **Grey, and a breach of Apple's licence for whoever does it.** | The licence grants use "on a single Apple-branded Device" and forbids copying/decrypting/modifying/deriving ([Darwin userland 16 licence](https://www.apple.com/legal/sla/docs/iOS16_iPadOS16.pdf), §2(a), §2(d)). Not distributing Darwin is the right mitigation and you do it. Courts split on the rest (below). |
+| **Four things in the repo that contradict its own legal statements** | **Fix before anything else.** | Vendor blobs tracked in git, Darwin screenshots still in history, App Store/FairPlay experiments plus an iPhone identity, "Darwin" emphasised in the brand. Details below. |
 | **The $HackiOS token** | **Separate, and the biggest risk of the whole thing.** | A token licenses nothing and cannot make the project "legal"; it can only fund it. But it turns a research project into one with a revenue stream, which changes how courts, Apple, platforms and regulators see it. |
 
 The single most useful sentence: **keep the token and the code completely apart, and never sell or
@@ -28,13 +28,13 @@ gate anything that contains Apple's code behind it.**
   hardware was enforceable. Psystar was a commercial hardware seller, and the district court also
   found a DMCA violation (I could not confirm what the appeal said about the DMCA part).
 - **[Apple v. Corellium](https://9to5mac.com/2023/05/08/us-court-corellium-apple-ios/) (11th Cir., May
-  2023, unpublished):** Corellium won on fair use for its iOS virtualisation, reasoning that it
-  advanced security research and that iOS is largely functional. Three limits matter to you: the
+  2023, unpublished):** Corellium won on fair use for its Darwin virtualisation, reasoning that it
+  advanced security research and that Darwin is largely functional. Three limits matter to you: the
   opinion is unpublished and fact-specific; the court **sent back Apple's claims about icons and
   wallpapers** unresolved; and the parties [settled in December 2023](https://www.theregister.com/2023/12/18/apple_corellium_case_settles/)
   on confidential terms. Corellium was a research tool, not a consumer port.
-- **What follows for HakiOS:** you sit between the two. You do not sell iOS or hardware (good, unlike
-  Psystar), but you are a hardware port that lets people run iOS on a phone, not a research
+- **What follows for HakiOS:** you sit between the two. You do not sell Darwin or hardware (good, unlike
+  Psystar), but you are a hardware port that lets people run Darwin on a phone, not a research
   virtualiser, and Corellium's facts are about research. Do not rely on Corellium as a safe harbour.
 - **Jurisdiction decides a lot.** Apple's licence is governed by California law (§12), but the
   maintainers and users live elsewhere. In the EU, rules on lawful acquirers and interoperability
@@ -43,7 +43,7 @@ gate anything that contains Apple's code behind it.**
 ### What the build does that touches Apple's code (the exposure that is yours, not the user's)
 
 - `sysimage/unpack.sh` unpacks parts of an IPSW the user supplies (nothing is downloaded) and `userland/build.sh`
-  assembles a modified root image: it selects parts of iOS, replaces launchd with `stage0`, injects
+  assembles a modified root image: it selects parts of Darwin, replaces launchd with `stage0`, injects
   our dylibs into SpringBoard and other Apple processes (`userland/src/inject*.c`), and
   `xnuloader/mkidentity.py` copies the iPhone's device-tree identity so the system "believes it is
   the iPhone its files were built for". Licence §2(d) forbids to "modify, or create derivative works".
@@ -75,7 +75,7 @@ Note: deleting `Binaries/` is not enough, because `SILICIUM_UEFI.fd` carries the
 `pull-firmware-root.sh` and UEFIReader flow), build `SILICIUM_UEFI.fd` locally, and drop the tracked
 copies. Then fix the sentences in README/LEGAL so they are true.
 
-### P0-b. iOS screenshots are still in the history
+### P0-b. Darwin screenshots are still in the history
 
 Commit `3849ceb` (2026-10-25) removed `docs/homescreen.jpg`, `lockscreen`, `settings`, `messages`,
 `maps`, `wallet`, `appstore-*`, and more, but they remain retrievable from history and from any clone
@@ -92,13 +92,13 @@ consciously: the alternative is to accept the risk and say so.
 Apple's services". Yet: the loader presents the device as an iPhone (`identity.h`), and
 `userland/src/inject_store.c` (opt-in `STOREFRONT=1`) injects into `appstored`, makes it answer with
 the storefront `143469-2,8`, and notes that it fetched Apple's bag from `bag.itunes.apple.com` and
-`init.itunes.apple.com` "by hand". `inject_fairplay.c` studies Apple's **FairPlay** daemon. iOS itself,
+`init.itunes.apple.com` "by hand". `inject_fairplay.c` studies Apple's **FairPlay** daemon. Darwin itself,
 believing it is an iPhone X, also contacts Apple's servers on its own.
 
 **Status (27 October 2026).** The App Store and FairPlay experiments were removed from the tree earlier. The Apple data in the
 distributed loader is now gone too: `prebuilt/loader.efi` is built with the placeholder identity (`xnuloader/mkidentity.sh
 --placeholder`, no Apple device-tree data in it; checked by searching the binary for the iPhone model and board names), and
-`tools/update-prebuilt.sh` builds it that way in a temporary copy so that it cannot come back. The loader that starts iOS is built
+`tools/update-prebuilt.sh` builds it that way in a temporary copy so that it cannot come back. The loader that starts Darwin is built
 by the user (`make loader`), on their own machine, with the identity taken from **their** copy of the IPSW. **Still open:** the
 loader's own source writes two fixed device-tree values (`serial-number` "RDW00POCOX5P", `model-number` "MQAC2", in
 `xnuloader/loader.c`; the second is an Apple model code), and older commits of `prebuilt/loader.efi` in the git history still
@@ -110,12 +110,12 @@ store is what draws attention. **Fix:** keep these experiments out of the public
 branch), make outbound traffic to Apple's service hosts blocked by default in the image with a documented
 switch, and rewrite the sentence to say what is true.
 
-### P1. The name and the logo emphasise "iOS"
+### P1. The name and the logo emphasise "Darwin"
 
 The project is "HakiOS" in the repo, "HackiOS" in the token and site, and the brand rules write "HACK in
-white, iOS in red". "iOS" is Apple's mark; descriptive use ("works with iOS") is fine, but a product name
+white, Darwin in red". "Darwin" is Apple's mark; descriptive use ("works with Darwin") is fine, but a product name
 that embeds and highlights it is where confusion claims start, and `hackios.org` repeats it. This is a
-branding decision, not a legal emergency: at least stop highlighting "iOS" in the logo, and use one
+branding decision, not a legal emergency: at least stop highlighting "Darwin" in the logo, and use one
 spelling everywhere. A rename is the clean fix if you expect to grow.
 
 ## 3. Copyright hygiene in your own code (low effort, high value)
@@ -185,7 +185,7 @@ review §2 and §4 before the team acts on this.
 ## 6. Decisions I need from you (ranked)
 
 1. Remove the vendor blobs and the built UEFI image from the tree (P0-a)? I can prepare the change.
-2. Purge the iOS screenshots from history (P0-b)? This rewrites history; it needs the whole team.
+2. Purge the Darwin screenshots from history (P0-b)? This rewrites history; it needs the whole team.
 3. Move the App Store / FairPlay experiments off the public repository (P0-c)?
 4. Keep the "HackiOS" name, or rename before it grows (P1)?
 5. Change the community pot so it is never paid to holders pro rata (§4.1)?

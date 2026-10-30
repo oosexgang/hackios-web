@@ -6,11 +6,13 @@ of Apple's and nothing of any phone's.
 
 Where to start:
 
-- [Getting started](getting-started/index.md): the open kernel in QEMU in a few commands, or the iOS 16.5 user space you lay
+- [Getting started](getting-started/index.md): the open kernel in QEMU in a few commands, or the Darwin 16.5 user space you lay
   out yourself.
 - [On the phone](getting-started/phone.md): the POCO X5 Pro 5G, in RAM with `fastboot boot`, back to Android with a reboot.
 - [Port a device](porting/index.md): a device is a repository of its own over the common one: a defconfig, a status file, its
   drivers.
+- [Installing beside Android](dual-boot.md): HakiOS as a second system on the POCO X5 Pro, a menu at every start, your data kept.
+- [U-Boot](u-boot.md): the loader started by U-Boot instead of Silicium's UEFI, from RAM, with nothing of the vendor's.
 - [Reference](reference/drivers.md): every driver, configuration symbol and boot argument, made from the source.
 
 ## What works
@@ -33,7 +35,7 @@ The table is made from the devices' own `device.conf`: [all devices](devices/ind
 ## The three layers
 
 1. **The open core**: the kernel port, the loader, the drivers, the tools. All source, in these repositories.
-2. **What you put on top**: the kernel can start a user space you supply; it was built so that it can start iOS 16.5's, which you
+2. **What you put on top**: the kernel can start a user space you supply; it was built so that it can start Darwin 16.5's, which you
    lay out yourself from Apple's own download. None of it is in the repositories.
 3. **Apple's services** (activation, Apple ID, iCloud, the App Store): not supported and not a goal.
 
@@ -44,9 +46,10 @@ Android. What is and is not written to a phone: [Architecture](concepts/architec
 
 | Repository | What |
 |---|---|
-| [hakios](https://github.com/oosexgang/hakios) | **common**: the kernel port, every common driver, the loader, user space, the tools, this documentation, and `devices/qemu` |
+| [hakios-xnu-kernel](https://github.com/oosexgang/hakios-xnu-kernel/tree/hakios) | **common**: the kernel port, every common driver, the loader, user space, the tools, this documentation, and `devices/qemu` |
 | [hakios-sm7325](https://github.com/oosexgang/hakios-sm7325) | POCO X5 Pro 5G: its defconfig, status, UEFI platform, firmware script, and its SoC's layer (`soc/`: the Qualcomm SC7280 family) |
-| [hakios-uefi](https://github.com/oosexgang/hakios-uefi) | HakiOS's UEFI: Mu-Silicium with HakiOS's boot path, banner and name |
+| [hakios-uefi](https://github.com/oosexgang/hakios-uefi) | the firmware that starts the loader: Mu-Silicium with HakiOS's boot path, banner and name, and HakiOS's U-Boot (`u-boot/`) |
+| [hakios-metal](https://github.com/oosexgang/hakios-metal) | Metal's command model on the Adreno, through the kernel's GPU driver |
 
 `devices/manifest.conf` in the common repository names each one and the revision it is at; `tools/hakios-device.py sync` clones them
 into `devices/` and `uefi/`. One repository per device: it carries its SoC's layer, and `tools/hakios-device.py new` makes one. [How the repositories fit](porting/repositories.md).

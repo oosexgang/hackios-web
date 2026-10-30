@@ -8,7 +8,7 @@ this repository's README claims; the things this repository has *tested* are mar
 
 | | [ios-sweet](https://github.com/dipa-studio/ios-sweet) | [UniXNU](https://github.com/UniXNU/UniXNU) | [Bergamota](https://github.com/ry-diffusion/bergamota) | HakiOS |
 |---|---|---|---|---|
-| What it is | one phone, bring-up of iOS 16 | a general UEFI environment for iOS/macOS on ARM64, in the manner of OpenCore | one phone, bring-up of iOS 18 (a fork of ios-sweet) | a Darwin kernel port with its own loader and driver set, and a Linux-style configuration system |
+| What it is | one phone, bring-up of Darwin userland 16 | a general UEFI environment for Darwin/macOS on ARM64, in the manner of OpenCore | one phone, bring-up of Darwin userland 18 (a fork of ios-sweet) | a Darwin kernel port with its own loader and driver set, and a Linux-style configuration system |
 | Hardware | Redmi Note 10 Pro (SM7150) | Xiaomi Pad 6S Pro (SM8550), shared SoC code | Poco F1 (SDM845) | POCO X5 Pro 5G (SM7325), and a generator for a new device from its own device tree |
 | Kernel | Apple's open xnu-8796 | not stated on its page | xnu-11215 ("Heartwood") | Apple's open xnu-8796.121.2 |
 | Boot | `fastboot boot` of a shim; HFS+ root in `userdata` | UEFI | its own bootloader from `boot` | `fastboot boot` (RAM only), or a UEFI loader that reads its payload from the volume it was started from (tested in QEMU; not yet on a phone) |
@@ -38,8 +38,8 @@ These are things that exist in this repository and that a reader can check:
 
 ## What the others have that this one does not
 
-- ios-sweet and Bergamota are small enough to read in an afternoon, and Bergamota targets a newer iOS (18) with its
-  own tool for the arm64e/pointer-authentication gap. HakiOS targets the iOS 16.5 generation, whose userland the
+- ios-sweet and Bergamota are small enough to read in an afternoon, and Bergamota targets a newer Darwin (18) with its
+  own tool for the arm64e/pointer-authentication gap. HakiOS targets the Darwin userland 16.5 generation, whose userland the
   open xnu-8796 matches.
 - UniXNU is aiming at a shared UEFI layer that many devices use; HakiOS's loader is one device family's, so far.
 - Bergamota ships a macOS control app. HakiOS has `xl` and `make`, which are command lines.

@@ -1,7 +1,7 @@
 # HakiOS — network stack review
 
 A read-level audit of the networking code: the `en0`/`en1` data paths, the links behind them,
-and the Apple80211 control plane iOS talks to. The goal was to find real correctness bugs and to
+and the Apple80211 control plane Darwin talks to. The goal was to find real correctness bugs and to
 map what is genuinely left to do. No build or device run was part of this pass (done on a Windows
 host); every finding is from reading the source, with file and line references so each can be
 checked.

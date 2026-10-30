@@ -91,5 +91,5 @@ The boot log says `hakios-kernel: N drivers built in (... nt36672 ...)`, and `sy
 ## 5. Write down what it does
 
 The driver's head says what has been seen (on the phone, in QEMU, compiled only). The device's `device.conf` has a `status` line
-for the part it makes work. [docs/driver-review](https://github.com/oosexgang/hakios/tree/main/docs/driver-review)
+for the part it makes work. [docs/driver-review](https://github.com/oosexgang/hakios-xnu-kernel/tree/hakios/docs/driver-review)
 holds the audits of the common drivers: a new common driver gets one before it is relied on.

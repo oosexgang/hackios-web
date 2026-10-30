@@ -45,7 +45,7 @@ A file that is not a payload gives `is not a payload (no XNUP at its start)`, an
 ## Limits
 
 - **63 MiB.** The loader's payload region is 64 MiB and its last MiB holds the panic log. The kernel is about 15 MiB;
-  the **big iOS system image (2.5 GB) does not come this way**. It comes over USB (`xl ramdisk`, once per loader
+  the **big Darwin system image (2.5 GB) does not come this way**. It comes over USB (`xl ramdisk`, once per loader
   session) or, in the flash recipe, from the partition `darwin` (`docs/install.md`).
 - **The region has to be free.** The loader takes all 64 MiB of it with `AllocatePages(AllocateAddress)` (not only the
   pages the file fills: a payload sent over USB later, and the panic log, are written into the rest). A firmware that
@@ -61,3 +61,5 @@ A file that is not a payload gives `is not a payload (no XNUP at its start)`, an
   Manager (or a UEFI that boots from a volume) before it can be.
 - Whether Silicium leaves `0xF0000000` free at the point where the loader runs is not known.
 - The way to a phone that does not need a host today is the boot image itself, in a boot slot: `docs/install.md`.
+- Another UEFI on the phone, all of it open source: HakiOS's U-Boot, started from RAM by ABL, which takes the loader and the
+  payload from memory and starts the loader with `bootefi` ([U-Boot](u-boot.md)).

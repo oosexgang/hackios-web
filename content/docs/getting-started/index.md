@@ -6,7 +6,7 @@ should see, and what to check when you do not see it.
 | | What you get | What you need | Time |
 |---|---|---|---|
 | [**The open kernel in QEMU**](qemu.md#the-open-kernel) | the kernel, the loader and a tiny user space, booting | a Linux or macOS machine, QEMU | minutes |
-| [**iOS in QEMU**](qemu.md#ios-in-qemu) | the lock screen and the home screen in a window | Linux, 12 GB of disk, Apple's IPSW (downloaded for you) | an hour, mostly downloads |
+| [**Darwin in QEMU**](qemu.md#darwin-in-qemu) | the lock screen and the home screen in a window | Linux, 12 GB of disk, Apple's IPSW (downloaded for you) | an hour, mostly downloads |
 | [**On the phone**](phone.md) | the system on a POCO X5 Pro 5G, in RAM | the phone, its boot loader unlocked, `adb` and `fastboot` | an hour the first time |
 
 Building from source is optional for all three: `prebuilt/` has a kernel, a loader and libraries made from these repositories.

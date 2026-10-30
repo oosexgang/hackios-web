@@ -93,7 +93,7 @@ The unwrap in a pairwise message also has to use `cand_kek`. Message 2 is answer
 
 Two failures, both from a spoofed plaintext EAPOL frame:
 
-1. Any forged signed-looking key frame with `MIC|ACK` set and a bad MIC (or no message 1 seen yet) makes `lx_wpa_message` return `LX_WPA_BAD` (lx_wpa.c:484, 493). The loop exits at once and the join fails with `EAUTH`, which iOS shows as "wrong password" (`apple80211.c:639` maps `EAUTH` to result 21, "invalid PMK").
+1. Any forged signed-looking key frame with `MIC|ACK` set and a bad MIC (or no message 1 seen yet) makes `lx_wpa_message` return `LX_WPA_BAD` (lx_wpa.c:484, 493). The loop exits at once and the join fails with `EAUTH`, which Darwin shows as "wrong password" (`apple80211.c:639` maps `EAUTH` to result 21, "invalid PMK").
 2. A genuine message 3 sets `handshake = KEYS`; a forged message 1 right behind it sets `ANSWER` before the join thread has run. The loop then keeps waiting and times out after 8 s, although the handshake succeeded and message 4 was sent.
 
 Fix: make KEYS sticky, and do not end the wait on BAD (the standard says to silently discard bad frames):

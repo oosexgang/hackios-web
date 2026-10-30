@@ -62,4 +62,4 @@ A boot-argument that is removed or changes its meaning is a **VERSION** change, 
   been seen to boot is in the README's status table and in [port-pkg110.md](port-pkg110.md).
 - `-dirty` means a tracked file differs from the commit. A build from a modified tree says so.
 - `Darwin 22.5` is a name for the open-source xnu release the kernel is built on. The kernel is not Apple's `kernel`
-  and is not iOS's.
+  and is not Darwin's.

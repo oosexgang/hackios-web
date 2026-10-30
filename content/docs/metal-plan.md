@@ -98,18 +98,18 @@ What the plug-in now makes, in `userland/src/HakiosMetal.m`:
 
 How it was checked, and what that does not show:
 
-- `tools/metallib-test.sh DIR`: the C reading and `tools/metallib.py` agree on every function of every `.metallib` of the iOS 16.5
+- `tools/metallib-test.sh DIR`: the C reading and `tools/metallib.py` agree on every function of every `.metallib` of the Darwin userland 16.5
   system (the five MTLB files; the five runtime libraries of `AGXMetalA11.bundle` are another format, and both refuse them) and of
   macOS's; a file made by the test and then cut short at every length, and with each offset and length bent outside it, is refused
   every time, under the address and undefined-behaviour sanitizers. One correction came out of it: the header's second word at
   0x20 is the function list's length after its count, not its end (`tools/metallib.py` calls it `funcs_end` and does not use it).
 - `tools/metal-plugin-test.sh DIR`: the plug-in built for macOS, its device made the way Metal makes it, on the Mac's own
   `_MTLDevice`, `_MTLResource`, `_MTLLibrary`, `_MTLFunction`: buffers written, read back, copied, refused over `maxBufferLength`,
-  freed (and the caller's deallocator called); the five iOS libraries read (36, 135, 11, 274 and 0 functions; the last is
+  freed (and the caller's deallocator called); the five Darwin libraries read (36, 135, 11, 274 and 0 functions; the last is
   SafariSharedUI's, a header and nothing else), every function made by its name with its type, every module LLVM bitcode. All
-  under the address sanitizer. **macOS's Metal is not iOS 16.5's**: this shows the plug-in's own logic, not that iOS's Metal is
+  under the address sanitizer. **macOS's Metal is not Darwin 16.5's**: this shows the plug-in's own logic, not that Darwin's Metal is
   content with these objects.
-- Built for iOS 16.5 (`-Wall -Wextra`, no warnings). Not yet run on iOS: `metal_test` asks "what the device makes" in a process of
+- Built for Darwin userland 16.5 (`-Wall -Wextra`, no warnings). Not yet run on Darwin: `metal_test` asks "what the device makes" in a process of
   its own (`RC_JOBS=rc.jobs.metal`, `metal=1`), and its line is the result that goes here.
 
 Still nothing is drawn or computed: a pipeline made of these functions is the empty stand-in of step one. The next step is the
@@ -129,13 +129,13 @@ it is in this repository, the facts below are written here in our own words and 
   the question of the next step, and it is not decided here.
 - **Universal metallibs.** Newer systems ship framework libraries as a fat container (0xCAFEBABE) of an AIR64 slice and a binary
   for Apple's GPUs (QuartzCore's `default.metallib` on iPadOS 17). `hakios_metallib_thin()` takes the AIR64 slice, as Metal does;
-  `tools/metallib-test.sh` and `tools/metal-plugin-test.sh` check it. iOS 16.5's libraries are all thin.
+  `tools/metallib-test.sh` and `tools/metal-plugin-test.sh` check it. Darwin 16.5's libraries are all thin.
 - **CoreImage's limits.** `CIMetalDeviceGetLimits` reads `dedicatedMemorySize` and `sharedMemorySize`, which `_MTLDevice` does
   not answer; without them every `CIContext` throws (iconservicesagent ended over symbol glyphs there). The device now answers
   them, `isLowPower`, `isRemovable`, `isHeadless`, and `supportsFeatureSet:` (NO: the base reads Apple's tables).
 - **Clients by a file.** A file beside the bundle names the processes shown the device. `HakiosMetal.clients` does the same here,
   on top of `metal=N`.
-- **The window server needs QuartzCore's own `default.metallib`.** Their system image has it; iOS 16.5's (this port's) does not,
+- **The window server needs QuartzCore's own `default.metallib`.** Their system image has it; Darwin 16.5's (this port's) does not,
   which is the wall of step 7 above. It is not something the plug-in can supply: the library is Apple's.
 
 ## Frame skips

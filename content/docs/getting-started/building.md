@@ -4,7 +4,7 @@
 
 ## The kernel
 
-Apple's XNU sources (the release iOS 16.5 was built from) with this port laid over them:
+Apple's XNU sources (the release Darwin userland 16.5 was built from) with this port laid over them:
 
 ```sh
 make redwood_defconfig   # or any device's defconfig; without a .config every driver is built
@@ -41,7 +41,7 @@ A driver you edit in `drivers/` goes into the tree by itself on the next `make k
 make loader          # xnuloader/build.sh: clang and lld-link, an EFI application without EDK2
 ```
 
-The header `xnuloader/identity.h`, the properties by which iOS tells which iPhone it is, is not kept in the repository:
+The header `xnuloader/identity.h`, the properties by which Darwin tells which iPhone it is, is not kept in the repository:
 `xnuloader/mkidentity.sh` makes it at build time from the device tree in your own IPSW (`sysimage/unpack.sh` leaves it in `sysimage/`). `make loader-open` makes the placeholder
 loader that boots the open kernel only.
 

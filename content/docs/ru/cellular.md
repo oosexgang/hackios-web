@@ -1,16 +1,16 @@
 # Сотовая связь: состояние и план порта
 
-Сейчас сотовая связь в HakiOS **не работает**, но модем уже запускается из XNU (см. «21 октября» ниже). Wi-Fi использует WPSS и свой GLINK/QRTR; модем MPSS — отдельный процессор с другим каналом. `hakios.qmi.c` кодирует сообщения QMI и теперь позволяет привязать клиент к заданному транспорту QRTR, но канал к MPSS ещё не реализован. У iOS также нет драйверов AppleBaseband и AppleIPAppender для этого аппаратного пути. Запуск `CommCenter` без них уже проверялся: он завершается аварийно (см. README, раздел «Телефония»).
+Сейчас сотовая связь в HakiOS **не работает**, но модем уже запускается из XNU (см. «21 октября» ниже). Wi-Fi использует WPSS и свой GLINK/QRTR; модем MPSS — отдельный процессор с другим каналом. `hakios.qmi.c` кодирует сообщения QMI и теперь позволяет привязать клиент к заданному транспорту QRTR, но канал к MPSS ещё не реализован. У Darwin также нет драйверов AppleBaseband и AppleIPAppender для этого аппаратного пути. Запуск `CommCenter` без них уже проверялся: он завершается аварийно (см. README, раздел «Телефония»).
 
-Проверка `python3 devices/redwood/tools/modem_firmware.py --dtb devices/redwood/prebuilt/device-tree.dtb --firmware-dir fw-modem --node /soc/qcom,mss@4080000` сопоставила 28 сегментов штатной прошивки с областью `mpss@8b800000` (PAS ID 4). `MODEM=1 SYSTEM=1 ... userland/build.sh` теперь может положить эти локальные файлы в системный APFS после проверки. Это только подготовка образа: наличие прошивки в `/fw` не запускает MPSS. Исходник `hakios.nas.c` содержит клиент QMI NAS для заданного транспорта QRTR: он ищет службу, запрашивает регистрацию и силу сигнала, разбирает ответы и сбрасывает состояние при исчезновении службы. Уровень `bars` остаётся нулевым без подтверждённой регистрации. MPSS-транспорта в XNU пока нет, поэтому этот клиент ещё не получает сообщения с телефона и не подключён к статус-бару iOS. Форматы NAS сверены с [описанием libqmi](https://github.com/linux-mobile-broadband/libqmi/blob/main/data/qmi-service-nas.json).
+Проверка `python3 devices/redwood/tools/modem_firmware.py --dtb devices/redwood/prebuilt/device-tree.dtb --firmware-dir fw-modem --node /soc/qcom,mss@4080000` сопоставила 28 сегментов штатной прошивки с областью `mpss@8b800000` (PAS ID 4). `MODEM=1 SYSTEM=1 ... userland/build.sh` теперь может положить эти локальные файлы в системный APFS после проверки. Это только подготовка образа: наличие прошивки в `/fw` не запускает MPSS. Исходник `hakios.nas.c` содержит клиент QMI NAS для заданного транспорта QRTR: он ищет службу, запрашивает регистрацию и силу сигнала, разбирает ответы и сбрасывает состояние при исчезновении службы. Уровень `bars` остаётся нулевым без подтверждённой регистрации. MPSS-транспорта в XNU пока нет, поэтому этот клиент ещё не получает сообщения с телефона и не подключён к статус-бару Darwin. Форматы NAS сверены с [описанием libqmi](https://github.com/linux-mobile-broadband/libqmi/blob/main/data/qmi-service-nas.json).
 
 ## Проверка на телефоне, 20 октября 2026
 
-На redwood через `fastboot boot` временно запущены xnuloader и образ iOS 16.5. Системный APFS загружен в ОЗУ; разделы телефона не прошивались. `launchd` запустил `SpringBoard`, и на дисплее открылся интерфейс «Настройки». Это подтверждает загрузку iOS и работу экрана, но не работу модема. В журнале `mg_test` показывает `telephony = true` и `cellular-data = false`; запросы `com.apple.commcenter.xpc` и `com.apple.basebandd.xpc` остаются без службы. Значение `telephony = true` — ответ MobileGestalt о возможностях устройства, а не регистрация в сети. Тест выполнен с готовым ядром из `prebuilt`, поэтому изменения QMI в исходниках XNU в этой загрузке **не проверялись**. Дальнейший аппаратный тест требует сборки ядра с MPSS/QRTR и интеграции с iOS.
+На redwood через `fastboot boot` временно запущены xnuloader и образ Darwin userland 16.5. Системный APFS загружен в ОЗУ; разделы телефона не прошивались. `launchd` запустил `SpringBoard`, и на дисплее открылся интерфейс «Настройки». Это подтверждает загрузку Darwin и работу экрана, но не работу модема. В журнале `mg_test` показывает `telephony = true` и `cellular-data = false`; запросы `com.apple.commcenter.xpc` и `com.apple.basebandd.xpc` остаются без службы. Значение `telephony = true` — ответ MobileGestalt о возможностях устройства, а не регистрация в сети. Тест выполнен с готовым ядром из `prebuilt`, поэтому изменения QMI в исходниках XNU в этой загрузке **не проверялись**. Дальнейший аппаратный тест требует сборки ядра с MPSS/QRTR и интеграции с Darwin.
 
 ## Что установлено по redwood
 
-`devices/redwood/prebuilt/device-tree.dtb` содержит зарезервированную память `mpss@8b800000`, `qcom,smp2p-modem`, `qcom,glink/modem/qcom,modem_qrtr`, `qcom,ipa@1e00000` и `qcom,rmnet-ipa`. Это разные части тракта: запуск прошивки модема, сигнализация, управляющий QMI-канал и передача IP-пакетов. Дерево Android [redwood](https://github.com/Redwood-AOSP/android_device_xiaomi_redwood) включает `full_base_telephony.mk`; его `init.qcom.rc` запускает `vendor.qcrild` и `vendor.qcrild2`. [Ветка araxys с ядром/DTB](https://github.com/Redwood-AOSP/android_device_xiaomi_redwood-kernel/tree/araxys) пригодна как аппаратный справочник. Бинарники Android RIL нельзя просто запустить в iOS: им нужны Android binder, HAL, службы и ABI.
+`devices/redwood/prebuilt/device-tree.dtb` содержит зарезервированную память `mpss@8b800000`, `qcom,smp2p-modem`, `qcom,glink/modem/qcom,modem_qrtr`, `qcom,ipa@1e00000` и `qcom,rmnet-ipa`. Это разные части тракта: запуск прошивки модема, сигнализация, управляющий QMI-канал и передача IP-пакетов. Дерево Android [redwood](https://github.com/Redwood-AOSP/android_device_xiaomi_redwood) включает `full_base_telephony.mk`; его `init.qcom.rc` запускает `vendor.qcrild` и `vendor.qcrild2`. [Ветка araxys с ядром/DTB](https://github.com/Redwood-AOSP/android_device_xiaomi_redwood-kernel/tree/araxys) пригодна как аппаратный справочник. Бинарники Android RIL нельзя просто запустить в Darwin: им нужны Android binder, HAL, службы и ABI.
 
 Проверка по USB 20 октября 2026 года: fastboot определил продукт `redwood` и разблокированный загрузчик; Android сообщил `ro.boot.hardware.sku=redwood`, `ro.soc.model=SM7325`. Под Android подсистема `modem` и прошивка `yupik_ipa_fws` были `ONLINE`, `vendor.qcrild`, `vendor.qcrild2`, `vendor.qrtr-ns` — `running`; присутствовали `rmnet_ipa0` и `rmnet_data0`–`rmnet_data5`. Состояние SIM: `ABSENT,LOADED` для двух слотов. Временная загрузка `xnuloader` через `fastboot boot` и его `selftest` прошли (`selftest-ok`); это проверка загрузчика, а не сотовой связи в XNU.
 
@@ -78,7 +78,7 @@ XL_CMDLINE="debug=0x8 rd=md0 hv_wdt_pet=1 bootcpu=7 cpus=8 cpufreq=1 sb_delay=60
 `modem=1` в обычной загрузке делает всё то же на своём потоке и оставляет модем включённым,
 опрашивая NAS каждые две секунды; результат — в `sysctl kern.hakios.cellular_up`,
 `cellular_registered`, `cellular_bars`, `cellular_dbm`, `cellular_radio`. Палочки в
-статус‑баре iOS из этого ещё не получаются: нужна либо часть CommCenter, либо подмена
+статус‑баре Darwin из этого ещё не получаются: нужна либо часть CommCenter, либо подмена
 элемента статус‑бара в `libhakios.sb.dylib` по этим sysctl (следующий шаг).
 
 ## 23 октября 2026: буфер RMTFS и перезапуски телефона
@@ -102,7 +102,7 @@ XL_CMDLINE="debug=0x8 rd=md0 hv_wdt_pet=1 bootcpu=7 cpus=8 cpufreq=1 sb_delay=60
   `modem_rmtfs_rw_off=1` (отказ в чтении), `modem_rmtfs_rw_fake=1` (запись есть, ответ «нет»),
   `modem_rmtfs_delay=S` (пауза перед первым чтением), `modem_share_off=1`, `modem_no_nav=1`.
 
-Паника `copyio.c:89 Assertion failed: pan != 0` в пользовательских процессах iOS встречалась в
+Паника `copyio.c:89 Assertion failed: pan != 0` в пользовательских процессах Darwin встречалась в
 двух прогонах с модемом; её причина не найдена.
 
 ## 23 октября 2026, вечер: модем читает файлы, выходит в ONLINE
@@ -238,9 +238,9 @@ readiness`. Драйвер IPA модема при ініціалізації ч
   Switch Slot (0x46): логічний слот 1 → фізичний слот 2, потім повторні запити.
 - Прогони з `modem_step=11` тримають SpringBoard 600 с (телефон стоїть на логотипі Apple);
   тепер `tools/modem-cycle.sh` бере `XL_SB_DELAY` з оточення, і прогін 31 — повне завантаження
-  iOS з модемом у фоні (`modem=1`).
+  Darwin з модемом у фоні (`modem=1`).
 
-### Прогін 31 (09:12): повне завантаження iOS, перемикання слота, ПЕРШИЙ СИГНАЛ
+### Прогін 31 (09:12): повне завантаження Darwin, перемикання слота, ПЕРШИЙ СИГНАЛ
 
 `XL_SB_DELAY=8` + `modem=1`: SpringBoard стартує одразу (телефон більше не стоїть на логотипі
 Apple під час тестів), модем піднімається у фоні. Після UIM Switch Slot (логічний 1 → фізичний 2)
@@ -249,7 +249,7 @@ UMTS** — радіо працює, модем бачить мережу; реє
 Register = `UIM_UNINITIALIZED`: SIM ще ініціалізується після перемикання). Тепер крок 11 раз на
 10 с питає стан картки та NAS Get System Info (0x4d).
 
-Статус-бар: у SpringBoard iOS 16.5 стільникові пункти заповнює `SBStatusBarStateAggregator`
+Статус-бар: у SpringBoard Darwin userland 16.5 стільникові пункти заповнює `SBStatusBarStateAggregator`
 через `_updateSignalStrengthItem:withData:SIMInfo:barsGetter:barsSetter:` і `_setItem:enabled:`
 (селектори знайдені в кеші dyld). `inject_sb.c` тепер перехоплює цей метод: коли
 `kern.hakios.cellular_registered`, виставляє палички через barsSetter і вмикає пункт; раз на 3 с
@@ -267,7 +267,7 @@ Register = `UIM_UNINITIALIZED`: SIM ще ініціалізується післ
   activate, слот 1 + AID USIM, потім повторне Initiate Network Register.
 - Прогони з самим модемом не вмикали решту заліза: GPU (`gpu=1`), DSP/батарея (`adsp=1`),
   вібро (`haptic=5`), Wi-Fi (`wifi=1`) — звідси «no GPU to draw with», `SOC=-1%`, без вібрації.
-  Прогін 33 — з усім разом. Тач працює, коли екран увімкнений (iOS гасить його через ~25 с
+  Прогін 33 — з усім разом. Тач працює, коли екран увімкнений (Darwin гасить його через ~25 с
   бездіяльності; кнопка живлення будить).
 
 ### Прогони 33–34: усе залізо разом

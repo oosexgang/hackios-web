@@ -37,7 +37,7 @@ Method: traced every user-reachable entry (torch `write`/`read`, haptic `write`,
 
 ### CAM-1 camera read vs. session end: use-after-free of the frame ring
 
-`camdev_read` marks a place READING under `ios_lock`, drops the lock at 3869, then reads the globals `ring`, `ring_place_bytes` and `ring_frame_bytes` with no lock and copies the frame:
+`camdev_read` marks a place READING under `darwin_lock`, drops the lock at 3869, then reads the globals `ring`, `ring_place_bytes` and `ring_frame_bytes` with no lock and copies the frame:
 
 ```
 3873  vm_offset_t at = ring + (uint64_t)b * ring_place_bytes;
@@ -45,45 +45,45 @@ Method: traced every user-reachable entry (torch `write`/`read`, haptic `write`,
 3884  error = uiomove((caddr_t)at, (int)n, uio);
 ```
 
-The capture thread ends a session in `ios_stop()` (3401): it sets every place FREE under the lock (3405-3407, which also overwrites READING), then, without waiting for any reader, runs `titan_down(); power_down(); ring_free();` and `ring_free()` does `kmem_free(kernel_map, ring, ring_bytes)` and `ring = 0` (3370-3374). Nothing counts readers, so a reader mid-copy keeps a pointer into freed memory.
+The capture thread ends a session in `darwin_stop()` (3401): it sets every place FREE under the lock (3405-3407, which also overwrites READING), then, without waiting for any reader, runs `titan_down(); power_down(); ring_free();` and `ring_free()` does `kmem_free(kernel_map, ring, ring_bytes)` and `ring = 0` (3370-3374). Nothing counts readers, so a reader mid-copy keeps a pointer into freed memory.
 
 Ways the session ends while a reader is copying (a 12 MB frame is copied in milliseconds, and the code itself logs the time at 3891):
-- another process writes `HAKIOS_CAMERA_SENSOR` (3969-3978): `ios_switch_to` is seen by the loop at 3512, `ios_stop` runs within about 1 ms;
-- no read activity for `IDLE_MS` (1000 ms, 3526): `ios_last_read` is only refreshed at the start of a read (3810, 3843) and at its end (3899), not during the copy, so a reader that is descheduled or stuck in page faults on a big user buffer for 1 s is declared idle;
-- any fault (`healthy()`, SMMU fault, 1.5 s without a frame, an exposure write NACK) -> `give_up` -> `ios_stop`.
+- another process writes `HAKIOS_CAMERA_SENSOR` (3969-3978): `darwin_switch_to` is seen by the loop at 3512, `darwin_stop` runs within about 1 ms;
+- no read activity for `IDLE_MS` (1000 ms, 3526): `darwin_last_read` is only refreshed at the start of a read (3810, 3843) and at its end (3899), not during the copy, so a reader that is descheduled or stuck in page faults on a big user buffer for 1 s is declared idle;
+- any fault (`healthy()`, SMMU fault, 1.5 s without a frame, an exposure write NACK) -> `give_up` -> `darwin_stop`.
 
 Result: `dc civac` on the unmapped VA (a cache-maintenance fault from kernel code with no recovery handler) -> kernel panic; if the range was reused (the next `ring_alloc`, or any other kmem allocation) `uiomove` copies unrelated kernel memory out to user space; if `ring` was already zeroed, `at` is a near-NULL address. Reachable by any process that can open the 0666 node.
 
 Fix (sketch):
 ```
-+ static unsigned ios_readers;                 /* under ios_lock */
-  camdev_read: under ios_lock, after choosing b:
++ static unsigned darwin_readers;                 /* under darwin_lock */
+  camdev_read: under darwin_lock, after choosing b:
 -   place[b].state = PLACE_READING;
-+   place[b].state = PLACE_READING; ios_readers++;
++   place[b].state = PLACE_READING; darwin_readers++;
 +   snapshot at/n/ring_frame_bytes into locals here, still under the lock
   ... at the end (the existing lock at 3895):
-+   ios_readers--; wakeup(&ios_readers);
-  ios_stop(), before ring_free():
-+   lck_mtx_lock(&ios_lock);
-+   while (ios_readers != 0) msleep(&ios_readers, &ios_lock, PZERO, "hakios-camera-drain", NULL);
-+   lck_mtx_unlock(&ios_lock);
++   darwin_readers--; wakeup(&darwin_readers);
+  darwin_stop(), before ring_free():
++   lck_mtx_lock(&darwin_lock);
++   while (darwin_readers != 0) msleep(&darwin_readers, &darwin_lock, PZERO, "hakios-camera-drain", NULL);
++   lck_mtx_unlock(&darwin_lock);
 ```
-Also refresh `ios_last_read` while `ios_readers != 0` in the idle test.
+Also refresh `darwin_last_read` while `darwin_readers != 0` in the idle test.
 
 ### CAM-2 unprivileged control of sensor and mode; permanent shutdown
 
-`HAKIOS_CAMERA_SENSOR` accepts any sensor index (< 4) and any mode number `c.b` (3969-3978). `ios_select()` honours an explicit mode directly: the 4:3 / 31 fps / 13 MP filter at 4019-4032 only runs when `mode_n >= ctab->modes`; an explicit mode is accepted if it passes the checks at 4035 (lanes, data type 0x2b, `width % 4`, fps and frame length non-zero). `ios_start()` then calls `ring_alloc(RAW10_STRIDE(width) * height)` (3436) for `RING = 3` places (3254, 3383) of kernel memory. If a table has a full-resolution mode (the S5KHM2SD is a 108 MP sensor; the tables are not in the repository, so NEEDS-HARDWARE/IMAGE for the actual sizes) this is hundreds of MB per session from an unprivileged process, and each session start repeats it.
+`HAKIOS_CAMERA_SENSOR` accepts any sensor index (< 4) and any mode number `c.b` (3969-3978). `darwin_select()` honours an explicit mode directly: the 4:3 / 31 fps / 13 MP filter at 4019-4032 only runs when `mode_n >= ctab->modes`; an explicit mode is accepted if it passes the checks at 4035 (lanes, data type 0x2b, `width % 4`, fps and frame length non-zero). `darwin_start()` then calls `ring_alloc(RAW10_STRIDE(width) * height)` (3436) for `RING = 3` places (3254, 3383) of kernel memory. If a table has a full-resolution mode (the S5KHM2SD is a 108 MP sensor; the tables are not in the repository, so NEEDS-HARDWARE/IMAGE for the actual sizes) this is hundreds of MB per session from an unprivileged process, and each session start repeats it.
 
-Consequences of failure are permanent: a failed `ring_alloc` or any other step in `ios_start` returns false -> `give_up("the camera did not start")` (3500-3503); `ios_select` failing for a sensor with no `.tab` in `fw/` (the build only installs tabs for module files present in `fw-camera/`, userland/build.sh:392-400) -> `give_up("a sensor that cannot be used")` (4091-4093). `broken` is never cleared (except in quiesce), every later open/read returns EIO (3785, 3816). The same holds for one transient NACK: `exposure_write` -> `give_up` (3356-3358, 3593-3595), `sensor_table` has no retry (2703), whereas the PMIC and chip-ID reads retry (697, 1432).
+Consequences of failure are permanent: a failed `ring_alloc` or any other step in `darwin_start` returns false -> `give_up("the camera did not start")` (3500-3503); `darwin_select` failing for a sensor with no `.tab` in `fw/` (the build only installs tabs for module files present in `fw-camera/`, userland/build.sh:392-400) -> `give_up("a sensor that cannot be used")` (4091-4093). `broken` is never cleared (except in quiesce), every later open/read returns EIO (3785, 3816). The same holds for one transient NACK: `exposure_write` -> `give_up` (3356-3358, 3593-3595), `sensor_table` has no retry (2703), whereas the PMIC and chip-ID reads retry (697, 1432).
 
 Fix (sketch):
 ```
  camdev_write, HAKIOS_CAMERA_SENSOR:
--   ios_switch_mode = c.b;
-+   ios_switch_mode = c.b;               /* and in ios_select(): */
- ios_select(), for an explicit mode_n also require
+-   darwin_switch_mode = c.b;
++   darwin_switch_mode = c.b;               /* and in darwin_select(): */
+ darwin_select(), for an explicit mode_n also require
 +   pixels <= 13000000 && fps_milli <= 31000
- ios_select failure / ios_start failure for a switch requested from user space:
+ darwin_select failure / darwin_start failure for a switch requested from user space:
 -   give_up(...)
 +   fall back to the previous sensor/mode; only give_up on hardware faults
  devfs_make_node(..., 0666, ...) -> 0660 with a group the media daemon is in
@@ -153,19 +153,19 @@ Fix: `sensor_delay(us > 100000 ? 100000 : us)`.
 
 ### CAM-5 mode fields only partly validated
 
-`ios_select()` checks lanes, data type, `width % 4`, fps and frame_length != 0 (4035-4036) but:
-- `frame_length < EXPOSURE_MARGIN (40)` makes `ios_ask.lines = frame_length - EXPOSURE_MARGIN` (4053) wrap to ~4G (clamped later at 3311) and `*frame_lines - EXPOSURE_MARGIN` (3316) wrap so the final clamp of `lines` is skipped; `exposure_write` default branch computes `extra = frame_lines - ios_mode->frame_length` (3347), which wraps if `shortest > FRAME_LINES_MAX`.
-- width/height have no upper bound: `RAW10_STRIDE(width) * ios_mode->height` is 32-bit (3436; also `frames_alloc` 2084 and 3161) and wraps; the SMMU mapping (sized from the ring) and the IFE's real write size then disagree, the SMMU refuses the overflow (so this is a fault, not corruption). In `smmu_up()` a mapping above 1 GiB gives `thirds > 512` and `second[... + t]` (2197) writes past the second-level page into the third-level pages of the same allocation (SMMU table corruption, not a heap overflow).
+`darwin_select()` checks lanes, data type, `width % 4`, fps and frame_length != 0 (4035-4036) but:
+- `frame_length < EXPOSURE_MARGIN (40)` makes `darwin_ask.lines = frame_length - EXPOSURE_MARGIN` (4053) wrap to ~4G (clamped later at 3311) and `*frame_lines - EXPOSURE_MARGIN` (3316) wrap so the final clamp of `lines` is skipped; `exposure_write` default branch computes `extra = frame_lines - darwin_mode->frame_length` (3347), which wraps if `shortest > FRAME_LINES_MAX`.
+- width/height have no upper bound: `RAW10_STRIDE(width) * darwin_mode->height` is 32-bit (3436; also `frames_alloc` 2084 and 3161) and wraps; the SMMU mapping (sized from the ring) and the IFE's real write size then disagree, the SMMU refuses the overflow (so this is a fault, not corruption). In `smmu_up()` a mapping above 1 GiB gives `thirds > 512` and `second[... + t]` (2197) writes past the second-level page into the third-level pages of the same allocation (SMMU table corruption, not a heap overflow).
 
-Reachable only through the table (or CAM-2's mode selection). Fix: reject modes with `frame_length <= EXPOSURE_MARGIN`, `width > 16384`, `height > 16384` in `ios_select()` and `capture_sensor()`.
+Reachable only through the table (or CAM-2's mode selection). Fix: reject modes with `frame_length <= EXPOSURE_MARGIN`, `width > 16384`, `height > 16384` in `darwin_select()` and `capture_sensor()`.
 
 ### CAM-6 `keep_picture` unserialised
 
-`HAKIOS_CAMERA_KEEP` (3959-3960 -> 3906) does `bzero(keep header)`, fills the header, `uiomove`s into `keep + 4096` and updates `loader_recording[]` with no lock. Two writers (any process) interleave: header of one picture over the data of the other, `frames = 1`. Memory-safe (same bounds, `want <= keep_bytes` is checked at 3914). Fix: take `ios_lock` (or a dedicated mutex) around the body.
+`HAKIOS_CAMERA_KEEP` (3959-3960 -> 3906) does `bzero(keep header)`, fills the header, `uiomove`s into `keep + 4096` and updates `loader_recording[]` with no lock. Two writers (any process) interleave: header of one picture over the data of the other, `frames = 1`. Memory-safe (same bounds, `want <= keep_bytes` is checked at 3914). Fix: take `darwin_lock` (or a dedicated mutex) around the body.
 
 ### HAPTIC-2 no duty-cycle limit across taps
 
-`HAPTIC_MAX_MS` (349) limits one LOOP state, followed by an equal rest (906-910). A TAP (waveform 1, 856-859) has no rest: iOS (or any process writing to the 0666 node) writing a burst, 30 ms of silence, another burst ... starts a new tap each time `onset_us` changes (847). Only the chip's fault flags (checked every 50 ms, 925-929) stop it. PLAUSIBLE; whether this can overheat the motor is NEEDS-HARDWARE.
+`HAPTIC_MAX_MS` (349) limits one LOOP state, followed by an equal rest (906-910). A TAP (waveform 1, 856-859) has no rest: Darwin (or any process writing to the 0666 node) writing a burst, 30 ms of silence, another burst ... starts a new tap each time `onset_us` changes (847). Only the chip's fault flags (checked every 50 ms, 925-929) stop it. PLAUSIBLE; whether this can overheat the motor is NEEDS-HARDWARE.
 
 ### TORCH-3 30 s cap restarts on request
 
@@ -200,12 +200,12 @@ Camera, kernel side
 - `sensor_table` (2676-2714): operation/address/data widths validated per entry (2689), `out[4]` always enough, per-entry delay clamped to 100 ms. `read_chip_id`: `in` forced to 1-4 so `id[4]` is safe, `out` is 1 or 2.
 - All table-driven power kinds are validated (`power_step` 1233-1268): MCLK only 0/19200/24000, supply kinds only 1-3, others -> give up; the voltage written to an LDO can only be the one in `sensors[]` (`sensor_ldo`/`pm8008_put` allow-lists 645-653, 688-691; arrays indexed with `n <= 7`).
 - Register write allow-lists: camcc (875-879), PM8008i, PMIC GPIO 3 (555-559); read-backs on all of them; off paths for camera use `force` and always run to the end (`power_down`, `ldo_off`).
-- Every polling loop is bounded: `wait_done`, `wait_bits`, `wait_reg`, SMMU TLB sync (2222), clock branches (1986), `rpmh_write` (100 ms), `ios_session` (frame timeout 1.5 s, 3521), `wait_standby`, `bus_unwedge`, `capture_tpg` (2 s), `capture_sensor` (5 s).
+- Every polling loop is bounded: `wait_done`, `wait_bits`, `wait_reg`, SMMU TLB sync (2222), clock branches (1986), `rpmh_write` (100 ms), `darwin_session` (frame timeout 1.5 s, 3521), `wait_standby`, `bus_unwedge`, `capture_tpg` (2 s), `capture_sensor` (5 s).
 - User commands (`camdev_write` 3942-3981): fixed 24-byte struct, size checked first; `HAKIOS_CAMERA_SENSOR` index bounds-checked (3970); EXPOSURE values are unclamped when stored but clamped before use in all three consumers (3480, 3591, 3705, 3728); FOCUS clamped to 1023 in `af_move` (3039). `keep_picture` bounds: `bytes != 0`, `d` 1-3, `stride * height <= 2 * bytes` in 64-bit, `want <= keep_bytes`, copy size `min(bytes, resid)`.
-- `camdev_read` header: `bzero(&f)` before filling, `MIN(sizeof(f), resid)`, so no uninitialised bytes leave; place indexes `b < RING`; state reads/writes under `ios_lock`, the lock is not held across `uiomove`/`msleep` misuse (msleep releases it).
-- Locking between ioctl-side and capture thread: shared `place[]`, `ios_ask`, `ios_given` are under `ios_lock`; `ios_switch_to`/`ios_open` etc are volatile flags; lock order is always (ios_lock) or (hakios_smmu_lock) or (spmi spin), never nested with each other. The one gap is CAM-1.
+- `camdev_read` header: `bzero(&f)` before filling, `MIN(sizeof(f), resid)`, so no uninitialised bytes leave; place indexes `b < RING`; state reads/writes under `darwin_lock`, the lock is not held across `uiomove`/`msleep` misuse (msleep releases it).
+- Locking between ioctl-side and capture thread: shared `place[]`, `darwin_ask`, `darwin_given` are under `darwin_lock`; `darwin_switch_to`/`darwin_open` etc are volatile flags; lock order is always (darwin_lock) or (hakios_smmu_lock) or (spmi spin), never nested with each other. The one gap is CAM-1.
 - Single reader: a reader cannot be handed the place that is being programmed for the next frame (the next place is the lowest-sequence non-READING place, the reader takes the highest unread), so I found no tearing with one reader; with two simultaneous readers I did not prove either way.
-- IFE DMA is confined by an SMMU context that maps only the ring (or `frames_bytes`); the order in `ios_stop` stops the write master (`paths_down`), tears the SMMU context down and only then frees memory. Cache maintenance (`dc civac` before reads, `dsb sy`) is present where the CPU reads DMA memory.
+- IFE DMA is confined by an SMMU context that maps only the ring (or `frames_bytes`); the order in `darwin_stop` stops the write master (`paths_down`), tears the SMMU context down and only then frees memory. Cache maintenance (`dc civac` before reads, `dsb sy`) is present where the CPU reads DMA memory.
 - Idle timeout and frame timeout: a stalled sensor ends the session in 1.5 s (3521-3525).
 - Boot-args: `cam` (clamped 0-5), `cam_sensor` (string compared against the fixed names, cannot index out of range), `cam_mode` (checked against `modes` in both paths), `cam_frames` (1..300), `cam_fake_fps` (1..30), `cam_keep_mb` (<= 64), `cam_settle` (masked to a byte), `cam_vblank` (<= 0x3fff), `cam_gain`/`cam_shutter` clamped before the registers are written (3091-3103, `exposure_limits`). `cam_after` is unclamped, `secs * 1000` wraps for absurd values: trusted boot-arg.
 - `RPMh` command DB parse (`rpmh_resource`): `slave->count > 512` skipped, data offsets checked against the mapping, `levels[]` filled up to `max` only.
@@ -222,7 +222,7 @@ Camera, user-space side
 - The 1568-1750 stretch of hakios.camera.c (read-only `show_*` printers) and `userland/src/camera_isp.c` outside the tuning loader (demosaic, AE, AWB) and `camera_test.c`, `camera_avtest.m`: not read for safety.
 - `hakios_wifi_file()`/`image_file()` (hakios.wifi.c): assumed to return a stable read-only pointer into the image; ownership and alignment not verified.
 - `ml_io_map_unmappable` failure mode in `rpmh_resource` (cmd_db NULL dereference if the mapping fails): not verified.
-- Behaviour with two simultaneous camera readers beyond what is said above; behaviour when `psci_smp_stop_others()` leaves a stopped CPU holding `ios_lock` or `hakios_smmu_lock` (the quiesce paths skip those locks when `leaving`, torch/haptic/camera all do).
+- Behaviour with two simultaneous camera readers beyond what is said above; behaviour when `psci_smp_stop_others()` leaves a stopped CPU holding `darwin_lock` or `hakios_smmu_lock` (the quiesce paths skip those locks when `leaving`, torch/haptic/camera all do).
 - Interplay with the audio DSP driver's use of the RPMh TCS 0 and with hakios.speaker.c / buttons for shared pins and the SPMI arbiter beyond the spin lock.
 - userland/src/inject_media.c (writes the torch node) and the camera ISP's float handling.
 
@@ -230,15 +230,15 @@ Camera, user-space side
 
 Nothing was built or run; each edit was re-read for syntax and types only.
 
-- CAM-1: FIXED (hakios.camera.c). New `ios_readers` count (under `ios_lock`); `camdev_read` counts itself in the same lock hold that marks the place READING and takes `at` and the frame size from `ring`, `ring_place_bytes` and `ring_frame_bytes` there; it leaves the count (and `wakeup`s) in its final lock section. New `ios_drain_readers()` (waits under `ios_lock` with `msleep` until the count is 0) is called before `ring_free()` in `ios_stop()` and in `fake_session()`. Lock order: the drain holds only `ios_lock` (power is already down); nothing else nests with it. The optional "refresh `ios_last_read` while a read is in progress" was not done: the drain already makes an idle stop safe.
+- CAM-1: FIXED (hakios.camera.c). New `darwin_readers` count (under `darwin_lock`); `camdev_read` counts itself in the same lock hold that marks the place READING and takes `at` and the frame size from `ring`, `ring_place_bytes` and `ring_frame_bytes` there; it leaves the count (and `wakeup`s) in its final lock section. New `darwin_drain_readers()` (waits under `darwin_lock` with `msleep` until the count is 0) is called before `ring_free()` in `darwin_stop()` and in `fake_session()`. Lock order: the drain holds only `darwin_lock` (power is already down); nothing else nests with it. The optional "refresh `darwin_last_read` while a read is in progress" was not done: the drain already makes an idle stop safe.
 - CAM-2: SKIPPED. Capping the mode's pixels or fps for user-chosen modes changes the documented ABI (`HAKIOS_CAMERA_SENSOR` takes any mode), and the real mode sizes live in tables that are not in the tree. Replacing `give_up` with a fall back to the previous sensor and mode is a design change. Node mode is policy (see DEV-1).
 - TORCH-1: FIXED (hakios.torch.c). `dark()` sets a `forcing` flag while it runs and `put()` ignores the `broken` latch only then (all other checks, the allow-list, the arbiter check and the read-back stay). `dark()` also tries all four steps instead of stopping at the first failure; a clean run does the same writes in the same order. Not done: the repeated dark() retry every 100 ms in `serve()` (a design change).
 - TORCH-2: FIXED (hakios.torch.c). `light()` sets `lit = true` before the module-enable write; `dark()` still clears it only on success. In the torch=2 path, a failed `light(1000)` now calls `dark()` if `lit` is set. Quiesce is unchanged: it already calls `dark()` when `lit` is set, which is now true in the failing case.
 - HAPTIC-1: FIXED (hakios.haptic.c). `loaded = level >= 3 && configure() && load_waveforms()` is evaluated apart from `level == 4`; level 5 calls `serve()` only when `loaded`, otherwise `give_up("the waveforms are not loaded")` (chip into reset).
 - CAM-3: FIXED (hakios.camera.c). `vaf()` records `vaf_voted = on` before the RPMh request, as `rails()` does, so `af_down()` sends the "off" even if RPMh did not report done in time. Worst case is one extra harmless "off" request. Whether a late completion really happens is hardware behaviour.
 - CAM-4: FIXED (hakios.camera.c). `power_step()` passes `delay_us` capped at 100000 to `sensor_delay()`, the same cap the sensor-register path uses.
-- CAM-5: FIXED (hakios.camera.c). `ios_select()` rejects modes with `frame_length <= EXPOSURE_MARGIN`, `frame_length > FRAME_LINES_MAX`, width or height over 16384; `capture_sensor()` rejects width/height over 16384 and `frame_length <= 40` (EXPOSURE_MARGIN is defined later in the file, so the literal 40 as in `exposure()`). 16384 x 16384 keeps the 32-bit sizes and the SMMU third-level count in range.
-- CAM-6: FIXED (hakios.camera.c). New `keep_lock` mutex (own mutex, not `ios_lock`, so the capture thread never waits on a user copy) held across the header and data writes in `keep_picture()`; never nested with `ios_lock`.
+- CAM-5: FIXED (hakios.camera.c). `darwin_select()` rejects modes with `frame_length <= EXPOSURE_MARGIN`, `frame_length > FRAME_LINES_MAX`, width or height over 16384; `capture_sensor()` rejects width/height over 16384 and `frame_length <= 40` (EXPOSURE_MARGIN is defined later in the file, so the literal 40 as in `exposure()`). 16384 x 16384 keeps the 32-bit sizes and the SMMU third-level count in range.
+- CAM-6: FIXED (hakios.camera.c). New `keep_lock` mutex (own mutex, not `darwin_lock`, so the capture thread never waits on a user copy) held across the header and data writes in `keep_picture()`; never nested with `darwin_lock`.
 - HAPTIC-2: SKIPPED. A duty-cycle limit needs the motor's thermal limits (hardware) and is a policy change.
 - TORCH-3: SKIPPED. The cap is per request by design; a hard on-time limit is a policy change.
 - DEV-1: SKIPPED. Node mode 0666 is policy and was not to be changed.

@@ -14,8 +14,11 @@ that you create yourself, and nowhere else. [What is written, exactly](../concep
 
 - the phone, its boot loader unlocked;
 - `adb` and `fastboot` on the PC (Google's platform-tools; on Windows, see [Windows](../windows.md));
-- the images of [iOS in QEMU](qemu.md#ios-in-qemu) (`userland/system.apfs`), and `make loader` done once;
+- the images of [Darwin in QEMU](qemu.md#darwin-in-qemu) (`userland/system.apfs`), and `make loader` done once;
 - the phone's own firmware, pulled from it (below). It is the vendor's and is never in the repositories.
+- the firmware that starts the loader: HakiOS's U-Boot (`make u-boot`, open source only: [U-Boot](../u-boot.md)), or
+  Silicium's UEFI built with your phone's own vendor drivers (`uefi/README.md`). `xl` takes Silicium's when it is built, else
+  U-Boot's (`XL_FIRMWARE=` to choose). Either is started from RAM.
 
 ## Step by step
 
