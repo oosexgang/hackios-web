@@ -58,7 +58,7 @@ device's. A device's defconfig is three lines: the common kernel, its SoC's frag
 | `/private/var` | only with `ufs_write=1 var_store=1` | the partition `darwin`, which you create yourself (`tools/userdata-carve.py` prints the commands; it changes nothing) |
 | anything else | never | the loader refuses every other write; `tools/provenance.allow` lists each piece of code that can write, and why |
 
-[LEGAL.md](https://github.com/oosexgang/hakios-xnu-kernel/blob/hakios/LEGAL.md) has the same, with what is and is not distributed.
+[LEGAL.md](https://github.com/oosexgang/hakios-xnu-kernel/blob/main/LEGAL.md) has the same, with what is and is not distributed.
 
 ## Where the code is
 

@@ -4,7 +4,7 @@ import { isLocale, type Locale } from "@/lib/locales";
 import { getDict } from "@/lib/dict";
 import { TELEGRAM, TEAM, TOKEN, PRESS, CONTACT_HANDLE, REPOS } from "@/lib/site";
 
-const QUICK = `git clone -b hakios https://github.com/oosexgang/hakios-xnu-kernel.git hakios
+const QUICK = `git clone https://github.com/oosexgang/hakios-xnu-kernel.git hakios
 cd hakios
 make doctor          # what this machine lacks, and what to do
 make qemu-open       # the open kernel in QEMU: nothing of Apple's, nothing of a phone's`;

@@ -9,7 +9,7 @@
 | SoC | `none` |
 | Configuration | `make qemu_defconfig` |
 | Maintainer | the HakiOS developers (README.md) |
-| Repository | [`devices/qemu/`](https://github.com/oosexgang/hakios-xnu-kernel/tree/hakios/devices/qemu) |
+| Repository | [`devices/qemu/`](https://github.com/oosexgang/hakios-xnu-kernel/tree/main/devices/qemu) |
 
 ## What works
 
