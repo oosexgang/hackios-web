@@ -12,7 +12,7 @@ Measured on the phone on 3 and 4 November 2026: the Adreno at 550 MHz, the panel
 |---|---|---|
 | How | the Adreno's own command packets; shaders compiled by Mesa's ir3 in the process | UniXNU's stack: AdrenoMetal's frontend, metal2vulkan, Turnip |
 | Page swipe, frames a second | 100 to 104 | 50 to 57 |
-| Settings' scroll | 109 | 41 |
+| Settings' scroll | about 90 | 41 |
 | Opening an app | about 90 | not recorded |
 | Home button | 92 with the wallpaper frozen to one picture (`wallpaper_freeze=1`), 28 with `wallpaper_cache=1` | 41 to 57 |
 | Frames over 16.7 ms | 4% | not recorded |
