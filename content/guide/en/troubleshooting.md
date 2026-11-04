@@ -51,7 +51,9 @@ make config          # what is wrong with the .config, and why
 |---|---|
 | `probe: no GPU: …` | the kernel was started without `gpu=1`, or the GPU did not start (see above) |
 | `MTLCreateSystemDefaultDevice()` returns nil | the device is hidden unless `metal=1` (only `metal_test`), `2` or `3` is given |
-| the window server restarts in a loop | `metal=3` exposes a device that cannot draw yet to the window server; use `1` or `2` |
+| the window server restarts in a loop | with the default plug-in, `metal=3` exposes a device that cannot draw to the window server; use `1` or `2`, or an image built with `METAL_PLUGIN=ca` |
+| `metal=1` and the window server still draws through OpenGL ES | the image has no `METAL_PLUGIN=ca` plug-in: `PREBUILT=1` compiles none. See [Draw the window server through Metal](metal.md#draw-the-window-server-through-metal) |
+| `metal_m2v=1` and nothing changes | the plug-in was linked without metal2vulkan: `tools/mk-m2v.sh` before `userland/build.sh ... TURNIP=1 M2V=1` |
 | the plug-in has no command buffers | it was built without the library: see [Linking the plug-in with the GPU](metal.md#linking-the-plug-in-with-the-gpu) |
 | `HakiosMetal: asked and not implemented: -…` | not an error of yours: the app wanted a part of Metal that does not exist yet. The line names it |
 

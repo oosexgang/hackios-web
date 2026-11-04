@@ -48,6 +48,8 @@ export const NAV: NavSection[] = [
   {
     title: "GPU, Metal, cellular",
     items: [
+      { title: "Metal on the Adreno", slug: "reference/metal" },
+      { title: "Metal measurements", slug: "reference/metal-measurements" },
       { title: "Metal plan", slug: "metal-plan" },
       { title: "The shader compiler", slug: "air" },
       { title: "AIR report", slug: "air-report" },

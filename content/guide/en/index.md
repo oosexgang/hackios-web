@@ -9,7 +9,7 @@ hakios runs Apple's open-source Darwin kernel (XNU) on Android phones, the way A
 | see it boot, today, with nothing to lose | [Run it in QEMU](qemu.md) | a computer, 30 minutes |
 | understand the pieces before touching anything | [How it works](how-it-works.md) | nothing |
 | run it on a real phone | [Run it on a phone](phone.md) | a POCO X5 Pro 5G with an unlocked boot loader |
-| talk to the GPU through Metal | [Metal](metal.md) | the phone, or just a computer for the tests |
+| draw through Metal, or talk to the GPU through it | [Metal](metal.md) | the phone, or just a computer for the tests |
 | bring hakios to another phone | [Adapt it to your device](your-device.md) | an ARM64 phone, patience |
 | fix a run that went wrong | [When something goes wrong](troubleshooting.md) | the log |
 
@@ -29,7 +29,7 @@ hakios runs Apple's open-source Darwin kernel (XNU) on Android phones, the way A
 | Wi-Fi | yes | network (virtio) |
 | Speakers, microphone, battery level | yes | sound |
 | Cameras, vibration | yes | no |
-| Metal | started: buffers, command buffers, GPU blits | started |
+| Metal | partly: the window server draws through it, off by default; swipes 100 to 104 frames a second, not 120 | started: no GPU |
 | Cellular | partly: the modem boots and sees the network | no |
 | Bluetooth | no | no |
 | Charging while hakios runs | no | — |

@@ -34,6 +34,7 @@ export const REPOS = [
   { name: "hakios-uefi", url: `${GH}hakios-uefi`, key: "uefi" },
   { name: "hakios-metal", url: `${GH}hakios-metal`, key: "metal" },
   { name: "hakios-mt6768", url: `${GH}hakios-mt6768`, key: "mtk" },
+  { name: "hackios-web", url: `${GH}hackios-web`, key: "web" },
 ] as const;
 
 // The community token keeps the ticker it was issued with on chain.

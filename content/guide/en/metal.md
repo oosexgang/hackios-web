@@ -1,8 +1,66 @@
 # Metal
 
-Metal is Apple's GPU interface: apps record work into command buffers and the GPU runs it. In hakios, **hakios-metal** turns that work into the Adreno GPU's own command packets and hands them straight to the kernel's GPU driver. No Vulkan, no Mesa in between.
+Metal is Apple's GPU interface: programs record work into command buffers and the GPU runs it. On the POCO X5 Pro 5G the window server can draw through Metal on the Adreno 642L, by two paths, chosen at boot. Without `metal=1` it draws through OpenGL ES, as it always has.
 
 ## Where it stands
+
+Measured on the phone on 3 and 4 November 2026: the Adreno at 550 MHz, the panel 1080 x 2400 at 120 Hz. Both paths draw the system correctly. **120 frames a second has not been reached.**
+
+<!-- FINAL-NUMBERS -->
+
+| | hakios-metal | Metal on Vulkan |
+|---|---|---|
+| How | the Adreno's own command packets; shaders compiled by Mesa's ir3 in the process | UniXNU's stack: AdrenoMetal's frontend, metal2vulkan, Turnip |
+| Page swipe, frames a second | 100 to 104 | 50 to 57 |
+| Settings' scroll | 109 | 41 |
+| Opening an app | about 90 | not recorded |
+| Home button | 92 with the wallpaper frozen to one picture (`wallpaper_freeze=1`), 28 with `wallpaper_cache=1` | 41 to 57 |
+| Frames over 16.7 ms | 4% | not recorded |
+
+After the finger lifts, 185 of a swipe's 205 frames on hakios-metal take 8.3 ms, one refresh. While it drags, frames come at 75 to 80 a second, with the window server waiting 8 to 14 ms on the GPU. Everything that was tried, and what did not help: [Metal measurements](/docs/reference/metal-measurements). The whole reference: [Metal on the Adreno](/docs/reference/metal).
+
+Only the system's own interface is shown drawing. Other Metal programs are not shown to work, and games are not claimed.
+
+## Draw the window server through Metal
+
+You build this yourself. Nothing of it is in `prebuilt/`, and `PREBUILT=1` compiles no plug-in: you need the cross toolchain (`xnu-deps/setup.sh`), your own Darwin user space laid out with `sysimage/unpack.sh`, and the phone's GPU firmware in `fw-gpu/`.
+
+**The window server's shader library.** This system's QuartzCore has none, so you make one on your machine from the one you have and a later CoreAnimation's that you supply. It is never committed.
+
+```sh
+CA_QC_METALLIB=/path/to/default.metallib tools/ca-metallib.py ~/ca-share
+```
+
+**The hakios-metal path.** Put [hakios-metal](https://github.com/oosexgang/hakios-metal) beside the main repository.
+
+```sh
+tools/mk-mesa.sh
+(cd ../hakios-metal && make ios HAKIOS=../hakios-xnu-kernel MESA=1)
+METAL_PLUGIN=ca RC_JOBS=rc.jobs.bench EXTRA_SHARE=~/ca-share REST=1 SYSTEM=1 userland/build.sh
+```
+
+**The Metal on Vulkan path.** It also needs rustup's cargo with Rust 1.98 and the `aarch64-apple-ios` target, `llvm-as` of LLVM 21 (apt: `llvm-21`), `glslang-tools`, clang, and the theos iPhoneOS 16.5 SDK. Its sources are fetched at pinned revisions by the scripts. Its runtime is GPL-2.0-or-later or LGPL-3.0-or-later and is linked statically: what a binary so built obliges is [to verify](/docs/reference/metal#licenses), so build it for yourself and do not hand it round.
+
+```sh
+tools/mk-mesa.sh && tools/mk-turnip.sh && tools/mk-m2v.sh
+METAL_PLUGIN=ca TURNIP=1 M2V=1 RC_JOBS=rc.jobs.bench EXTRA_SHARE=~/ca-share REST=1 SYSTEM=1 userland/build.sh
+```
+
+**Run and measure.** One command takes the phone from Android, boots, runs the bench four rounds and writes a summary. From Windows, the build in WSL and this in Git Bash: [Windows](/docs/windows).
+
+```sh
+tools/metal-run.sh                      # hakios-metal, 180 s; the summary in logs/<time>-metal.txt
+MORE="metal_m2v=1" tools/metal-run.sh   # Metal on Vulkan
+MORE="wallpaper_cache=1" tools/metal-run.sh   # any boot argument beside the defaults
+```
+
+The script sets `wallpaper_freeze=1`, so the icons blink once at the home screen and the wallpaper stays still until the next boot. To run without it, change `ARGS` in the script: `MORE` cannot turn it off.
+
+The summary has the frames per gesture (`tools/frames.py`), the plug-in's counters, what was refused, the frames on the panel, and any crash. What each boot argument does: [the table](/docs/reference/metal#boot-arguments).
+
+## Metal's command model on its own
+
+**hakios-metal** turns Metal's work into the Adreno's own command packets and hands them straight to the kernel's GPU driver. The rest of this page is that driver by itself: its tests, its probe, and calling it from code.
 
 | Part | State |
 |---|---|
@@ -10,9 +68,8 @@ Metal is Apple's GPU interface: apps record work into command buffers and the GP
 | buffers in GPU memory | **works** |
 | blits: copy and fill, done by the GPU's command processor | **works**, on the phone's GPU |
 | `.metallib` shader libraries: read and checked | **works** |
-| shaders: running a Metal function on the GPU | **not yet**: the AIR → NIR → ir3 compiler exists in hakios's Mesa build and is being joined to the driver |
-| render and compute pipelines, textures | **not yet** |
-| the system drawing its UI through Metal | **not yet**: it draws through OpenGL ES today |
+| shaders, render pipelines, textures | **works for the window server**, in the plug-in `METAL_PLUGIN=ca` builds and hakios-metal built with `MESA=1` |
+| the default plug-in, `userland/src/HakiosMetal.m`, for other programs | buffers, command buffers and blits; what it does not implement it logs |
 
 On the POCO X5 Pro's Adreno 642L, on 28 October 2026, the probe passed every check:
 
@@ -21,7 +78,7 @@ On the POCO X5 Pro's Adreno 642L, on 28 October 2026, the probe passed every che
 | copy 500,000 bytes | byte for byte, nothing around it touched, 4.2 ms |
 | fill 4, 256, 260, 65,540 and 999,996 bytes | all correct |
 | 40 command buffers in flight | completed in order, with their handlers |
-| copy 16 MB | 182 ms (92 MB/s: correct but slow; the fast path is the GPU's blitter, next) |
+| copy 16 MB | 182 ms (92 MB/s: correct but slow; the fast path is the GPU's blitter) |
 
 ## How the pieces fit
 
@@ -45,11 +102,11 @@ How Metal finds it: with the boot argument `metal=N`, the kernel names `HakiosMe
 | `metal=` | Who sees the Metal device |
 |---|---|
 | (not set) | nobody: the default, on purpose |
-| `1` | only the test program `metal_test` |
-| `2` | every process except the window server |
-| `3` | every process |
+| `1` | only the test program `metal_test`; with the `METAL_PLUGIN=ca` plug-in, the window server alone |
+| `2` | every process except the window server (default plug-in) |
+| `3` | every process (default plug-in) |
 
-> **Why off by default.** A Metal device that cannot draw yet makes the window server ask for it, fail, and restart in a loop. Until shaders work, keep `metal=` at 1 or 2.
+> **Why off by default.** The default plug-in cannot draw for the window server: with `metal=3` it asks for the device, fails and restarts in a loop. Keep it at 1 or 2 unless the image was built with `METAL_PLUGIN=ca`.
 
 ## 1. Build and test on your computer
 
@@ -169,9 +226,9 @@ The session must be long: in QEMU SpringBoard is up after about 208 seconds, and
 
 ## What comes next
 
-1. Shaders: connect the AIR front end (`tools/mesa/air` in the main repository) to the driver, so a Metal function compiles to the Adreno's ir3. Of the system's 456 shader modules, 321 already reach ir3 and 54 have run on the phone's GPU.
-2. Render and compute pipelines over those shaders.
-3. Fast copies through the GPU's blitter.
-4. Then CoreAnimation can draw through Metal instead of OpenGL ES.
+1. The drag: frames come at 75 to 80 a second while a finger moves the page; in the animation after it most frames take one refresh. Why the window server waits on the GPU that long is not established.
+2. The wallpaper: the home button's 92 frames a second come from freezing it to one picture. A wallpaper that moves or changes costs that again.
+3. Tearing: the panel reads the one buffer the driver writes. Writing behind the scan line (`fb_beam`, on by default) removed the bands to the eye, and costs no frames; 2 to 16 frames in 5 s still miss their scan.
+4. On Metal on Vulkan, the merge back after each frame: a compute pass over a tiled image.
 
-The long plan, with every step and test: [Metal on the Adreno](/docs/metal-plan) and [the shader compiler](/docs/air).
+How it got here, every step and test: [the plan](/docs/metal-plan) and [the shader compiler](/docs/air).

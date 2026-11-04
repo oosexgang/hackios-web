@@ -7,7 +7,7 @@ Next.js 15 (App Router, TypeScript), rendered to static pages at build time.
 |---|---|
 | `/<lang>` | the project, the status of each device, how it fits together, the repositories, the team, the press kit; the community token last, folded |
 | `/<lang>/guide/...` | the guide: start here, how it works, QEMU, the phone, Metal, adapting to your device, troubleshooting. Written for people, kept in this repository |
-| `/<lang>/docs/...` | the documentation of the [hakios-xnu-kernel](https://github.com/oosexgang/hakios-xnu-kernel/tree/hakios) repository, with a table of contents |
+| `/<lang>/docs/...` | the documentation of the [hakios-xnu-kernel](https://github.com/oosexgang/hakios-xnu-kernel/tree/main) repository, with a table of contents |
 | `/<lang>/faq` | the questions people ask, answered short |
 
 ## Run it
@@ -30,10 +30,10 @@ reference (`components/Search.tsx`, Ctrl+K or /), which loads `/<lang>/search.js
 
 ## The reference
 
-The pages are the hakios repository's `docs/`, copied into `content/docs/`:
+The pages are the hakios-xnu-kernel repository's `docs/`, copied into `content/docs/` (and its `CHANGELOG.md` into `content/changelog.md`):
 
 ```bash
-npm run docs                     # from ../hakios
+npm run docs                     # from ../hakios-xnu-kernel
 npm run docs -- /path/to/hakios
 ```
 
