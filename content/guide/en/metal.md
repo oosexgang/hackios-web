@@ -6,7 +6,7 @@ Metal is Apple's GPU interface: programs record work into command buffers and th
 
 Measured on the phone on 3 and 4 November 2026: the Adreno at 550 MHz, the panel 1080 x 2400 at 120 Hz. Both paths draw the system correctly. **120 frames a second has not been reached.**
 
-<!-- FINAL-NUMBERS -->
+
 
 | | hakios-metal | Metal on Vulkan |
 |---|---|---|
