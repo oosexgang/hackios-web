@@ -17,6 +17,8 @@ Metal — интерфейс GPU от Apple: программа записыва
 | Кнопка «домой» | 92 с обоями, застывшими в одну картинку (`wallpaper_freeze=1`), 28 с `wallpaper_cache=1` | 41–57 |
 | Кадры дольше 16,7 мс | 4% | не записано |
 
+Эти числа при полных 1125×2436. При обычных 750×1624, растянутых на панель, hakios-metal даёт около 110 кадров в секунду на всех жестах замера, 1,3% кадров дольше 16,7 мс: прокрутка Settings 118–120, перелистывание страниц 107–118, кнопка «домой» 95–111. Это искусственные жесты; настоящими пальцами меньше, около 100. Ровные 120 не достигнуты.
+
 После того как палец поднят, 185 из 205 кадров перелистывания на hakios-metal занимают 8,3 мс, один период обновления панели. Пока палец тянет страницу, кадры идут с частотой 75–80 в секунду, а оконный сервер ждёт GPU по 8–14 мс. Всё, что пробовали, и что не помогло: [Metal measurements](/docs/reference/metal-measurements). Полный справочник: [Metal on the Adreno](/docs/reference/metal).
 
 Показано только рисование собственного интерфейса системы. Что работают другие программы на Metal, не показано; игры не заявляются.
@@ -31,11 +33,11 @@ Metal — интерфейс GPU от Apple: программа записыва
 CA_QC_METALLIB=/путь/к/default.metallib tools/ca-metallib.py ~/ca-share
 ```
 
-**Путь hakios-metal.** Положите [hakios-metal](https://github.com/oosexgang/hakios-metal) рядом с основным репозиторием.
+**Путь hakios-metal.** Он в основном репозитории, в `hakios-metal/`.
 
 ```sh
 tools/mk-mesa.sh
-(cd ../hakios-metal && make ios HAKIOS=../hakios-xnu-kernel MESA=1)
+(cd hakios-metal && make ios MESA=1)
 METAL_PLUGIN=ca RC_JOBS=rc.jobs.bench EXTRA_SHARE=~/ca-share REST=1 SYSTEM=1 userland/build.sh
 ```
 
@@ -123,7 +125,7 @@ out/host/tests copy   # только тесты, в имени которых е
 
 Проба делает на настоящем GPU то же, что тесты на поддельном, по строке на проверку. Нужен телефон с hakios и `gpu=1` (значит, `fw-gpu/` уже снят) и iPhoneOS 16.5 SDK — его скачивает `xnu-deps/setup.sh` в основном репозитории.
 
-Положите `hakios-metal` рядом с основным репозиторием:
+`hakios-metal/` находится в основном репозитории:
 
 ```text
 work/

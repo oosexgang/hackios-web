@@ -17,6 +17,8 @@ Measured on the phone on 3 and 4 November 2026: the Adreno at 550 MHz, the panel
 | Home button | 92 with the wallpaper frozen to one picture (`wallpaper_freeze=1`), 28 with `wallpaper_cache=1` | 41 to 57 |
 | Frames over 16.7 ms | 4% | not recorded |
 
+Those numbers are at the full 1125x2436. At the default, 750x1624 stretched to the panel, hakios-metal does about 110 frames a second over all the bench's gestures, with 1.3% over 16.7 ms: Settings' scroll 118 to 120, page swipes 107 to 118, the home button 95 to 111. These are synthetic gestures; real fingers are slower, about 100. A steady 120 has not been reached.
+
 After the finger lifts, 185 of a swipe's 205 frames on hakios-metal take 8.3 ms, one refresh. While it drags, frames come at 75 to 80 a second, with the window server waiting 8 to 14 ms on the GPU. Everything that was tried, and what did not help: [Metal measurements](/docs/reference/metal-measurements). The whole reference: [Metal on the Adreno](/docs/reference/metal).
 
 Only the system's own interface is shown drawing. Other Metal programs are not shown to work, and games are not claimed.
@@ -31,11 +33,11 @@ You build this yourself. Nothing of it is in `prebuilt/`, and `PREBUILT=1` compi
 CA_QC_METALLIB=/path/to/default.metallib tools/ca-metallib.py ~/ca-share
 ```
 
-**The hakios-metal path.** Put [hakios-metal](https://github.com/oosexgang/hakios-metal) beside the main repository.
+**The hakios-metal path.** It is in the main repository, in `hakios-metal/`.
 
 ```sh
 tools/mk-mesa.sh
-(cd ../hakios-metal && make ios HAKIOS=../hakios-xnu-kernel MESA=1)
+(cd hakios-metal && make ios MESA=1)
 METAL_PLUGIN=ca RC_JOBS=rc.jobs.bench EXTRA_SHARE=~/ca-share REST=1 SYSTEM=1 userland/build.sh
 ```
 
@@ -123,7 +125,7 @@ out/host/tests copy   # only the tests whose name contains "copy"
 
 The probe does on the real GPU what the tests do on the fake one, one line per check. You need the phone running hakios with `gpu=1` (so `fw-gpu/` pulled), and the iPhoneOS 16.5 SDK, which `xnu-deps/setup.sh` in the main repository fetches.
 
-Put `hakios-metal` beside the main repository:
+`hakios-metal/` is in the main repository:
 
 ```text
 work/
