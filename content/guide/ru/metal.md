@@ -125,13 +125,7 @@ out/host/tests copy   # только тесты, в имени которых е
 
 Проба делает на настоящем GPU то же, что тесты на поддельном, по строке на проверку. Нужен телефон с hakios и `gpu=1` (значит, `fw-gpu/` уже снят) и iPhoneOS 16.5 SDK — его скачивает `xnu-deps/setup.sh` в основном репозитории.
 
-`hakios-metal/` находится в основном репозитории:
-
-```text
-work/
-├── hakios/          hakios-xnu-kernel
-└── hakios-metal/
-```
+`hakios-metal/` находится в основном репозитории.
 
 ```sh
 cd hakios-metal
@@ -208,11 +202,11 @@ hakios_metal_cb_free(cb);
 
 ### Связать плагин с GPU
 
-`userland/build.sh` собирает `HakiosMetal.bundle` с командными буферами и копированием на GPU, только если находит `../../hakios-metal/out/darwin/libhakios-metal.a` (или `$HAKIOS_METAL/out/darwin/...`). Без неё буферы лежат в обычной памяти, а очередь не создаёт командных буферов. Makefile hakios-metal пока пишет библиотеку в `out/ios/`; пока у него нет цели `darwin`, положите её туда, где её ищет сборка:
+`userland/build.sh` собирает `HakiosMetal.bundle` с командными буферами и копированием на GPU, когда находит `hakios-metal/out/ios/libhakios-metal.a` в основном репозитории (`make ios` там) или другую копию, указанную в `HAKIOS_METAL=`.
 
 ```sh
-mkdir -p ../hakios-metal/out/darwin && cp ../hakios-metal/out/ios/libhakios-metal.a ../hakios-metal/out/darwin/
-userland/build.sh        # напишет "HakiosMetal with hakios-metal (...)", если нашёл
+(cd hakios-metal && make ios MESA=1)
+userland/build.sh
 ```
 
 ## Попробовать в QEMU

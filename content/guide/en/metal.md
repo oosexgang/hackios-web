@@ -125,13 +125,7 @@ out/host/tests copy   # only the tests whose name contains "copy"
 
 The probe does on the real GPU what the tests do on the fake one, one line per check. You need the phone running hakios with `gpu=1` (so `fw-gpu/` pulled), and the iPhoneOS 16.5 SDK, which `xnu-deps/setup.sh` in the main repository fetches.
 
-`hakios-metal/` is in the main repository:
-
-```text
-work/
-├── hakios/          hakios-xnu-kernel
-└── hakios-metal/
-```
+`hakios-metal/` is in the main repository.
 
 ```sh
 cd hakios-metal
@@ -208,11 +202,11 @@ hakios_metal_cb_free(cb);
 
 ### Linking the plug-in with the GPU
 
-`userland/build.sh` builds `HakiosMetal.bundle` with GPU command buffers and blits only if it finds `../../hakios-metal/out/darwin/libhakios-metal.a` (or `$HAKIOS_METAL/out/darwin/...`). Without it, buffers live in plain memory and the queue makes no command buffers. The hakios-metal Makefile writes the library to `out/ios/` for now; until it has a `darwin` target, put it where the build looks:
+`userland/build.sh` builds `HakiosMetal.bundle` with GPU command buffers and blits when it finds `hakios-metal/out/ios/libhakios-metal.a` of the main repository (`make ios` there), or another copy named by `HAKIOS_METAL=`.
 
 ```sh
-mkdir -p ../hakios-metal/out/darwin && cp ../hakios-metal/out/ios/libhakios-metal.a ../hakios-metal/out/darwin/
-userland/build.sh        # prints "HakiosMetal with hakios-metal (...)" when it found it
+(cd hakios-metal && make ios MESA=1)
+userland/build.sh
 ```
 
 ## Try it in QEMU
